@@ -7,20 +7,32 @@ from .models import User
 
 
 class EmailAuthenticationForm(AuthenticationForm):
-    error_messages = {"invalid_login": _("That email address or password doesn’t look right. Try again.")}
+    error_messages = {
+        "invalid_login": _("That email address or password doesn’t look right. Try again.")
+    }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["username"].label = "Email address"
-        self.fields["username"].widget = forms.EmailInput(attrs={"autocomplete": "username", "autofocus": True})
+        self.fields["username"].widget = forms.EmailInput(
+            attrs={"autocomplete": "username", "autofocus": True}
+        )
 
     def clean_username(self):
         return self.cleaned_data["username"].strip().lower()
 
 
 class RegistrationForm(forms.ModelForm):
-    password1 = forms.CharField(label="Password", strip=False, widget=forms.PasswordInput(attrs={"autocomplete": "new-password"}))
-    password2 = forms.CharField(label="Confirm password", strip=False, widget=forms.PasswordInput(attrs={"autocomplete": "new-password"}))
+    password1 = forms.CharField(
+        label="Password",
+        strip=False,
+        widget=forms.PasswordInput(attrs={"autocomplete": "new-password"}),
+    )
+    password2 = forms.CharField(
+        label="Confirm password",
+        strip=False,
+        widget=forms.PasswordInput(attrs={"autocomplete": "new-password"}),
+    )
 
     class Meta:
         model = User

@@ -2,6 +2,8 @@
 
 Meeble is a warm, playful social-platform showcase prototype with an editorial visual identity. The first slice is a responsive home feed with sample stories, original local vector portraits and post artwork, locally saved likes and comments, post creation, and a few UI destinations represented by friendly “coming soon” states.
 
+The source lives in the public [am7t/meeble GitHub repository](https://github.com/am7t/meeble). The repository does not host the running demo.
+
 ## Run locally
 
 Python 3.10+ is required. The first install needs internet access to download Django; after that, the app itself makes no required external requests.
@@ -24,7 +26,7 @@ Then visit `http://127.0.0.1:8000`. The development server binds to this compute
 - Local email/password registration, sign-in, and sign-out use Django password hashing and database-backed sessions.
 - No real Google/Apple sign-in, email delivery, upload, messaging, marketplace, or remote service integration yet.
 
-## Next development phase
+## Development roadmap
 
 The current development milestone is evolving the showcase into a local Django application backed by SQLite while preserving the current UI and seeded feed. It remains self-hosted on the user's own machine. See [ARCHITECTURE.md](ARCHITECTURE.md), [DECISIONS.md](DECISIONS.md), and [GITHUB_ISSUES.md](GITHUB_ISSUES.md) for the chosen direction and feature backlog. This does not make the app publicly hosted or add required cloud costs.
 

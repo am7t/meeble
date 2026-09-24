@@ -1,6 +1,6 @@
 # GitHub issue plan
 
-This is the initial backlog for building Meeble in reviewable slices. Issues should be opened in the Meeble GitHub repository once the repository exists and is connected. Keep each change scoped, tested, and documented; split work when a milestone becomes too large for one review.
+This is the implementation backlog for Meeble in reviewable slices. Issues are tracked in the public [Meeble GitHub repository](https://github.com/am7t/meeble). Keep each change scoped, tested, and documented; split work when a milestone becomes too large for one review.
 
 ## Foundation
 
@@ -13,7 +13,7 @@ This is the initial backlog for building Meeble in reviewable slices. Issues sho
    - Enable foreign keys and add constraints and indexes where needed.
    - Keep the database file outside tracked source files.
 3. **[Done] Add continuous integration for the local app**
-   - Run formatting, linting, type checks where applicable, unit and integration tests, and a build/smoke check.
+   - Run Ruff formatting and linting, Django checks, migration consistency, and unit/integration tests. Add static type checks if typed modules are introduced.
    - Pin or constrain tool versions and document local equivalents.
 
 ## Accounts and profiles
@@ -76,4 +76,4 @@ This is the initial backlog for building Meeble in reviewable slices. Issues sho
 
 ## GitHub setup
 
-The project currently has local Git history but no configured remote. The user selected a public code repository. The connected GitHub account is `am7t`; the saved `gh` CLI login is invalid. Create the `am7t/meeble` repository, add it as `origin`, and publish the scoped commit history before opening this backlog as issues.
+The public `am7t/meeble` repository now contains the scoped project history. The app itself remains self-hosted on the user's machine and is not hosted by GitHub Pages. The saved `gh` CLI login is invalid; issue management uses the connected GitHub account until the CLI is re-authenticated.

@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-Python 3.10 or newer and a modern browser. The first dependency install needs internet access; after installation, the app itself makes no required external requests.
+Python 3.10 or newer and a modern browser. Node.js 22 is only needed for the front-end syntax check. The first dependency install needs internet access; after installation, the app itself makes no required external requests.
 
 ## Run
 
@@ -18,7 +18,7 @@ Open `http://127.0.0.1:8000`. The SQLite file remains in the project directory a
 
 ## Editing
 
-Keep modules readable and feature-focused. Use native dialogs and controls where practical, retain keyboard/focus support, and check narrow screens and reduced-motion behavior when changing the UI. Run `python manage.py test` and `python manage.py check` after backend changes.
+Keep modules readable and feature-focused. Use native dialogs and controls where practical, retain keyboard/focus support, and check narrow screens and reduced-motion behavior when changing the UI. Install `requirements-dev.txt` for Ruff. Run `ruff check .`, `ruff format --check .`, `node --check web/static/web/app.js`, `python manage.py check`, and `python manage.py test` before a change is ready.
 
 ## Local app
 

@@ -1,4 +1,4 @@
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import login, logout
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_http_methods, require_POST
 from .forms import EmailAuthenticationForm, RegistrationForm

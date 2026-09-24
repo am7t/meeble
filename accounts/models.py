@@ -33,4 +33,5 @@ class User(AbstractUser):
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 
+
 # Create your models here.

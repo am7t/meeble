@@ -5,6 +5,7 @@
 - Introduced a self-hosted Django + SQLite foundation and kept the showcase UI.
 - Added the email-based custom user model, initial migration, health endpoint, focused tests, and CI workflow.
 - Added local email/password registration, sign-in, and sign-out with Django hashing, database sessions, CSRF protection, and an accessible styled account flow.
+- Added Ruff lint/format checks, JavaScript syntax checking, Django checks, migration validation, and automated tests to CI.
 - Added the incremental implementation backlog in `GITHUB_ISSUES.md`.
 
 
