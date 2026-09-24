@@ -39,6 +39,15 @@ function loadState() {
 let state = loadState();
 const feed = document.querySelector('#feed');
 
+const today = new Date();
+document.querySelector('#todayLabel').textContent = `YOUR ${new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).format(today).toUpperCase()}`;
+const todayAtMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+let birthday = new Date(today.getFullYear(), 8, 26);
+if (birthday < todayAtMidnight) birthday = new Date(today.getFullYear() + 1, 8, 26);
+const daysUntilBirthday = Math.round((birthday - todayAtMidnight) / 86400000);
+const birthdayWhen = daysUntilBirthday === 0 ? 'today' : daysUntilBirthday === 1 ? 'tomorrow' : `in ${daysUntilBirthday} days`;
+document.querySelector('#birthdayCountdown').textContent = `${birthdayWhen} · make it sweet`;
+
 function saveState() {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
   catch (error) { showToast('Your browser could not save this change. Check available site storage and try again.'); }
@@ -77,7 +86,7 @@ const stories = [
   { name: 'ella', avatar: 'lila' }
 ];
 
-document.querySelector('#storiesRow').innerHTML = stories.map((story, index) => `<button class="story ${story.own ? 'is-own' : ''}" data-story="${escapeHTML(story.name)}" aria-label="${story.own ? 'Add to your story' : `View ${story.name}'s story`}"><span class="story-ring"><img class="avatar" src="assets/avatar-${story.avatar}.svg" alt="">${story.own ? '<span class="story-add">+</span>' : `<span class="story-count">${index + 2}</span>`}</span><span class="story-name">${escapeHTML(story.name)}</span></button>`).join('');
+document.querySelector('#storiesRow').innerHTML = stories.map((story) => `<button class="story ${story.own ? 'is-own' : ''}" data-story="${escapeHTML(story.name)}" aria-label="${story.own ? 'Add to your story' : `View ${story.name}'s story`}"><span class="story-ring"><img class="avatar" src="assets/avatar-${story.avatar}.svg" alt="">${story.own ? '<span class="story-add">+</span>' : ''}</span><span class="story-name">${escapeHTML(story.name)}</span></button>`).join('');
 
 document.querySelector('#friendsList').innerHTML = [stories[1], stories[2], stories[3]].map((friend, index) => `<div class="friend-row"><img class="avatar" src="assets/avatar-${friend.avatar}.svg" alt=""><span class="friend-info"><strong>${friend.name === 'jules' ? 'Jules Parker' : friend.name === 'lila' ? 'Lila Chen' : 'Maya Flowers'}</strong><small>${['probably at a cafe ☕', 'in her soft era ✿', 'sending you a hug ♡'][index]}</small></span><span class="online"></span></div>`).join('');
 

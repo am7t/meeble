@@ -36,7 +36,7 @@
     </header>
     <main class="content-wrap" id="home">
       <section class="welcome-row">
-        <div><div class="eyebrow"><span class="live-mark"></span> YOUR TUESDAY, SEPTEMBER 23</div><h1>Good things happen <em>here.</em></h1><p class="welcome-copy">A little place for the people, finds, and feelings you want to keep.</p></div>
+        <div><div class="eyebrow"><span class="live-mark"></span> <span id="todayLabel">YOUR PEOPLE, YOUR DAY</span></div><h1>Good things happen <em>here.</em></h1><p class="welcome-copy">A little place for the people, finds, and feelings you want to keep.</p></div>
         <div class="weekly-note"><div class="weekly-note-top"><span>YOUR WEEK IN LITTLE THINGS</span><svg class="icon"><use href="#i-spark"/></svg></div><div class="weekly-note-bottom"><strong>03</strong><span>new stories<br>from your people</span><span class="note-arrow">↗</span></div><div class="note-orbit" aria-hidden="true"></div></div>
       </section>
       <section class="stories-section" aria-label="Stories"><div class="section-heading"><div><span class="eyebrow">24 HOURS, A LITTLE CLOSER</span><h2>From your orbit</h2></div><button class="text-link" id="viewAllStories">All stories <svg class="icon"><use href="#i-arrow"/></svg></button></div><div class="stories-row" id="storiesRow"></div></section>
@@ -44,7 +44,7 @@
         <section class="feed-column"><div class="feed-heading"><div><span class="eyebrow">THE LATEST FROM YOUR PEOPLE</span><h2>Fresh from the group chat</h2></div><div class="feed-filter"><button class="filter active">For you</button><button class="filter">Following</button></div></div><div id="feed" class="feed-list"></div><button class="load-more" id="loadMore">That’s the good stuff for now <span>♡</span></button></section>
         <aside class="right-rail">
           <section class="rail-card note-card"><div class="rail-kicker"><svg class="icon"><use href="#i-spark"/></svg> A NOTE FOR TODAY</div><p>You’re allowed to be a work in progress <em>and still be proud of yourself.</em></p><div class="note-footer"><span>leave this one with you</span><span class="note-heart">♡</span></div></section>
-          <section class="rail-card birthday-card"><div class="rail-header"><span>ON THE CALENDAR</span><span class="calendar-date">26 <small>SEP</small></span></div><div class="birthday-person"><img class="avatar" src="assets/avatar-lila.svg" alt=""><span><strong>Lila’s birthday</strong><small>in 3 days · make it sweet</small></span><button aria-label="Send birthday wishes">♡</button></div></section>
+          <section class="rail-card birthday-card"><div class="rail-header"><span>ON THE CALENDAR</span><span class="calendar-date">26 <small>SEP</small></span></div><div class="birthday-person"><img class="avatar" src="assets/avatar-lila.svg" alt=""><span><strong>Lila’s birthday</strong><small id="birthdayCountdown">make it sweet · Sep 26</small></span><button aria-label="Send birthday wishes">♡</button></div></section>
           <section class="rail-card friends-card"><div class="rail-header"><span>YOUR CLOSE CIRCLE</span><button class="dots" aria-label="More">···</button></div><div id="friendsList"></div><button class="find-friends">Meet more people <svg class="icon"><use href="#i-arrow"/></svg></button></section>
           <div class="footer-links"><a href="#about">About</a><a href="#guidelines">Community</a><a href="#privacy">Privacy</a><span>© 2026 meeble</span></div>
         </aside>
