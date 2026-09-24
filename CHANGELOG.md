@@ -6,6 +6,7 @@
 - Added the email-based custom user model, initial migration, health endpoint, focused tests, and CI workflow.
 - Added local email/password registration, sign-in, and sign-out with Django hashing, database sessions, CSRF protection, and an accessible styled account flow.
 - Added Ruff lint/format checks, JavaScript syntax checking, Django checks, migration validation, and automated tests to CI.
+- Added SQLite profile, post, comment, reaction, and follow models with migrations, integrity constraints, indexes, and database-level regression tests.
 - Added the incremental implementation backlog in `GITHUB_ISSUES.md`.
 
 

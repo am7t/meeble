@@ -14,4 +14,4 @@ Meeble is a playful, customizable social space for a young audience, with profil
 
 ## Later work
 
-Profiles and validated customization, in-app Polaroid capture, SQLite-backed feed persistence, account flows, media, stories, messaging, Grail, notifications, and feature-specific security tests remain future milestones. Real Google/Apple sign-in and email delivery require network configuration and are not part of a fully offline run.
+Relational tables for profiles, posts, comments, reactions, and follows are in place. Editable profiles and validated customization, in-app Polaroid capture, SQLite-backed feed persistence, media, stories, messaging, Grail, notifications, and feature-specific authorization tests remain future milestones. Real Google/Apple sign-in and email delivery require network configuration and are not part of a fully offline run.

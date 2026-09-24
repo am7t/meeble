@@ -8,10 +8,10 @@ This is the implementation backlog for Meeble in reviewable slices. Issues are t
    - Serve the existing showcase UI and JSON endpoints from one local origin.
    - Keep the application runnable on a developer machine without cloud accounts.
    - Document install, run, backup, and reset behavior.
-2. **[In progress] Add a SQLite schema and migration workflow**
-   - Establish normalized accounts, sessions, profiles, posts, comments, reactions, and follows. The custom account model and initial migration are in place.
-   - Enable foreign keys and add constraints and indexes where needed.
-   - Keep the database file outside tracked source files.
+2. **[Done] Add a SQLite schema and migration workflow**
+   - Established normalized accounts, sessions, profiles, posts, comments, reactions, and follows through committed migrations.
+   - Enabled foreign keys and added constraints and indexes for the current schema.
+   - Kept the database file outside tracked source files. Feature endpoints remain in their own issues.
 3. **[Done] Add continuous integration for the local app**
    - Run Ruff formatting and linting, Django checks, migration consistency, and unit/integration tests. Add static type checks if typed modules are introduced.
    - Pin or constrain tool versions and document local equivalents.

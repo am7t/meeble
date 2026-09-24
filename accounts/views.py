@@ -1,7 +1,9 @@
 from django.contrib.auth import login, logout
+from django.db import transaction
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_http_methods, require_POST
 from .forms import EmailAuthenticationForm, RegistrationForm
+from .models import Profile
 
 
 @require_http_methods(["GET", "POST"])
@@ -10,7 +12,15 @@ def register(request):
         return redirect("home")
     form = RegistrationForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
-        user = form.save()
+        with transaction.atomic():
+            user = form.save()
+            Profile.objects.create(
+                user=user,
+                handle=f"m_{user.pk}",
+                display_name=(
+                    user.email.partition("@")[0].replace(".", " ").replace("_", " ").title()[:40]
+                ),
+            )
         login(request, user, backend="django.contrib.auth.backends.ModelBackend")
         return redirect("home")
     return render(request, "accounts/register.html", {"form": form})

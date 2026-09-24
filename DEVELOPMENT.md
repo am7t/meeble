@@ -18,8 +18,8 @@ Open `http://127.0.0.1:8000`. The SQLite file remains in the project directory a
 
 ## Editing
 
-Keep modules readable and feature-focused. Use native dialogs and controls where practical, retain keyboard/focus support, and check narrow screens and reduced-motion behavior when changing the UI. Install `requirements-dev.txt` for Ruff. Run `ruff check .`, `ruff format --check .`, `node --check web/static/web/app.js`, `python manage.py check`, and `python manage.py test` before a change is ready.
+Keep modules readable and feature-focused. Use native dialogs and controls where practical, retain keyboard/focus support, and check narrow screens and reduced-motion behavior when changing the UI. Install `requirements-dev.txt` for Ruff. Run `ruff check .`, `ruff format --check .`, `node --check web/static/web/app.js`, `python manage.py check`, `python manage.py makemigrations --check --dry-run`, and `python manage.py test` before a change is ready.
 
 ## Local app
 
-The local Django server and SQLite foundation are in place. Keep a reproducible dependency manifest, put the SQLite file and private media outside tracked source, use committed migrations, and preserve a local-only run command. Do not add cloud credentials or publicly expose the development server by default.
+The local Django server and SQLite schema are in place. Apply committed migrations with `python manage.py migrate`. The database enables SQLite foreign keys; migrations add checks, uniqueness rules, and indexes for current domain tables. Keep a reproducible dependency manifest, put the SQLite file and private media outside tracked source, and preserve a local-only run command. Do not add cloud credentials or publicly expose the development server by default.

@@ -32,6 +32,8 @@ class UserModelTests(TestCase):
         user = User.objects.get(email="amelia@example.com")
         self.assertNotEqual(user.password, "CiderMoon!56Little")
         self.assertTrue(user.check_password("CiderMoon!56Little"))
+        self.assertEqual(user.profile.handle, f"m_{user.pk}")
+        self.assertEqual(user.profile.display_name, "Amelia")
         self.assertRedirects(response, reverse("home"))
         self.assertEqual(int(self.client.session["_auth_user_id"]), user.pk)
 

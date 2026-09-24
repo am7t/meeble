@@ -27,3 +27,13 @@
 **Reason:** The product should be runnable and demonstrable from one user's machine without public hosting, paid infrastructure, or cloud credentials. SQLite is a real relational database in a single local file; Django supplies mature server-side primitives and keeps the implementation understandable.
 
 **Tradeoffs:** Multiple users on the same local instance share one database and one local server; this does not make a public service. Email delivery, Google/Apple sign-in, payments, and network-based realtime features require external configuration and are deferred. Use Django migrations and keep the database and private media out of Git.
+
+## D-004: Establish relational identity and social records before feed APIs
+
+**Status:** Accepted
+
+**Decision:** Keep authentication credentials in the custom User model, public identity in a one-to-one Profile, and social activity in separate Post, Comment, Reaction, and Follow records. Add database constraints for case-insensitive handles, non-empty bounded text, valid visibility/reaction values, unique reactions/follows, and no self-follows. Store feature activity in SQLite as those workflows move server-side.
+
+**Reason:** Relational constraints provide a reliable base before endpoint authorization is added and keep account credentials separate from public profile data. Seeded showcase content remains available while the UI is migrated incrementally.
+
+**Tradeoff:** Creating the schema alone does not make browser storage trusted or enforce user access. Any future endpoints must explicitly check ownership and visibility, with denied-access tests, before exposing these records.

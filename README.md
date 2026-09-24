@@ -24,10 +24,11 @@ Then visit `http://127.0.0.1:8000`. The development server binds to this compute
 - Demo profiles, stories, posts, and community sidebar.
 - Locally persisted post creation, likes, comments, and hidden posts.
 - Local email/password registration, sign-in, and sign-out use Django password hashing and database-backed sessions.
+- SQLite now has relational profile, post, comment, reaction, and follow tables with constraints; editable profiles and feed APIs are still being built.
 - No real Google/Apple sign-in, email delivery, upload, messaging, marketplace, or remote service integration yet.
 
 ## Development roadmap
 
-The current development milestone is evolving the showcase into a local Django application backed by SQLite while preserving the current UI and seeded feed. It remains self-hosted on the user's own machine. See [ARCHITECTURE.md](ARCHITECTURE.md), [DECISIONS.md](DECISIONS.md), and [GITHUB_ISSUES.md](GITHUB_ISSUES.md) for the chosen direction and feature backlog. This does not make the app publicly hosted or add required cloud costs.
+The current development milestone is connecting the existing UI and seeded feed to the local Django application and SQLite schema. It remains self-hosted on the user's own machine. See [ARCHITECTURE.md](ARCHITECTURE.md), [DECISIONS.md](DECISIONS.md), and [GITHUB_ISSUES.md](GITHUB_ISSUES.md) for the chosen direction and feature backlog. This does not make the app publicly hosted or add required cloud costs.
 
 See [REQUIREMENTS.md](REQUIREMENTS.md), [ARCHITECTURE.md](ARCHITECTURE.md), and [DEVELOPMENT.md](DEVELOPMENT.md) for the current slice and next steps.
