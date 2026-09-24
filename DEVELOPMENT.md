@@ -18,7 +18,7 @@ Open `http://127.0.0.1:8000`. The SQLite file remains in the project directory a
 
 ## Password recovery
 
-The default email backend is Django's console backend so recovery works offline: request a reset on the sign-in page and copy the one-hour, one-use link printed in the terminal running `runserver`. To deliver email, configure `DJANGO_EMAIL_BACKEND` plus the required `DJANGO_EMAIL_HOST`, `DJANGO_EMAIL_PORT`, `DJANGO_EMAIL_HOST_USER`, `DJANGO_EMAIL_HOST_PASSWORD`, `DJANGO_EMAIL_USE_TLS` or `DJANGO_EMAIL_USE_SSL`, and `DJANGO_DEFAULT_FROM_EMAIL` environment variables for the selected backend. Keep credentials out of Git and chat.
+The default email backend is Django's console backend so account verification and recovery work offline. After sign-up, copy the one-hour verification link printed in the terminal running `runserver`, open it in the same browser, and press **Verify email**; opening the link itself does not activate the account. Password reset links are one-use and also expire after one hour. To deliver email, configure `DJANGO_EMAIL_BACKEND` plus the required `DJANGO_EMAIL_HOST`, `DJANGO_EMAIL_PORT`, `DJANGO_EMAIL_HOST_USER`, `DJANGO_EMAIL_HOST_PASSWORD`, `DJANGO_EMAIL_USE_TLS` or `DJANGO_EMAIL_USE_SSL`, and `DJANGO_DEFAULT_FROM_EMAIL` environment variables for the selected backend. Keep credentials out of Git and chat.
 
 ## Editing
 

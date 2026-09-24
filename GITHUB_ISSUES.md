@@ -22,9 +22,9 @@ This is the implementation backlog for Meeble in reviewable slices. Issues are t
    - Hash passwords with a maintained password-hashing implementation.
    - Use Django's database-backed sessions, CSRF protection, and password hashing.
    - Validate inputs and return understandable errors without leaking internals. Add rate limiting before any network exposure.
-5. **[In progress] Add account recovery and email-provider boundaries**
-    - Password recovery now uses one-time, expiring reset tokens; email verification still needs an implementation decision and tests.
-    - Keep outbound mail behind Django's configurable email backend. Offline local runs print reset links in the server terminal; actual delivery needs a configured email provider.
+5. **[Done] Add account recovery and email-provider boundaries**
+    - Registration now requires a one-time, expiring email verification link; confirming it is a CSRF-protected POST so link scanners cannot activate accounts by opening a URL.
+    - Password recovery uses Django's one-time, expiring reset tokens. Outbound mail uses Django's configurable email backend; offline local runs print links in the server terminal.
 6. **[Done] Build editable and public profiles with validated customization**
    - Store profile fields relationally and supported layout/theme settings as validated structured data.
    - Enforce owner-only edits and viewer-specific post visibility on profile pages.

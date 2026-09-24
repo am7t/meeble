@@ -23,8 +23,8 @@ Then visit `http://127.0.0.1:8000`. The development server binds to this compute
 - Local Django app shell, SQLite database, bespoke art direction, and responsive feed experience.
 - Demo profiles, stories, posts, and community sidebar.
 - Fictional sample feed and sample-post interactions persist in browser storage as showcase data.
-- Local email/password registration, sign-in, and sign-out use Django password hashing and database-backed sessions.
-- Password recovery uses Django's expiring one-time reset tokens. In the offline default, its reset link is printed in the terminal running Meeble; a real email backend can be configured through environment variables.
+- Local email/password registration, sign-in, and sign-out use Django password hashing and database-backed sessions. Registration requires a one-time email verification confirmation.
+- Password recovery uses Django's expiring one-time reset tokens. In the offline default, verification and reset links are printed in the terminal running Meeble; a real email backend can be configured through environment variables.
 - Profiles are editable by their signed-in owner, with supported color and layout choices saved in SQLite.
 - Signed-in users' posts, reactions, comments, and follow relationships persist in SQLite with visibility and ownership checks.
 - Signed-in users can share 24-hour photo stories. Images are sanitized, stored outside static assets, and delivered only after server-side visibility checks; expired stories are removed with `python manage.py purge_expired_stories`.

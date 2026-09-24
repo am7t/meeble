@@ -3,7 +3,7 @@
 {% block content %}
   <span class="auth-eyebrow">MAKE YOURSELF AT HOME</span>
   <h1 id="auth-title">Find your people.</h1>
-  <p class="auth-intro">Create a local account for your Meeble space.</p>
+  <p class="auth-intro">Create a local account for your Meeble space.{% if console_email %} You’ll verify it with a link printed in the local server terminal.{% else %} You’ll receive a verification link by email.{% endif %}</p>
   <form class="auth-form" method="post" novalidate>
     {% csrf_token %}
     {% if form.non_field_errors %}<div class="auth-errors" role="alert">{{ form.non_field_errors }}</div>{% endif %}

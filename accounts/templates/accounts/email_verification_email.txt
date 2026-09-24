@@ -1,0 +1,6 @@
+Welcome to Meeble.
+
+Open this one-time link in your browser, then press “Verify email” to activate your account:
+{{ verification_url }}
+
+The link expires in one hour. If you did not create this account, you can ignore this message.

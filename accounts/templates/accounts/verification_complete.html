@@ -1,0 +1,8 @@
+{% extends "accounts/base_auth.html" %}
+{% block title %}Email verified · Meeble{% endblock %}
+{% block content %}
+  <span class="auth-eyebrow">YOU’RE IN</span>
+  <h1 id="auth-title">Your email is verified.</h1>
+  <p class="auth-intro">Your local account is ready. Sign in to start filling your Meeble space.</p>
+  <a class="auth-submit" href="{% url 'accounts:login' %}">Sign in to Meeble <span aria-hidden="true">→</span></a>
+{% endblock %}

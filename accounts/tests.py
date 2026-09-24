@@ -1,8 +1,10 @@
 from django.contrib.auth import authenticate
 from django.core import mail
+from django.utils.http import urlsafe_base64_encode
 from django.urls import reverse
 from django.test import Client, TestCase
 from .models import User
+from .tokens import email_verification_token
 
 
 class UserModelTests(TestCase):
@@ -21,22 +23,50 @@ class UserModelTests(TestCase):
         with self.assertRaisesMessage(ValueError, "An email address is required."):
             User.objects.create_user("", "safe demo password")
 
-    def test_registration_hashes_password_and_starts_a_session(self):
-        response = self.client.post(
-            reverse("accounts:register"),
-            {
-                "email": "Amelia@example.com",
-                "password1": "CiderMoon!56Little",
-                "password2": "CiderMoon!56Little",
-            },
-        )
+    def test_registration_creates_an_inactive_account_until_email_is_verified(self):
+        with self.settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend"):
+            response = self.client.post(
+                reverse("accounts:register"),
+                {
+                    "email": "Amelia@example.com",
+                    "password1": "CiderMoon!56Little",
+                    "password2": "CiderMoon!56Little",
+                },
+            )
 
         user = User.objects.get(email="amelia@example.com")
         self.assertNotEqual(user.password, "CiderMoon!56Little")
         self.assertTrue(user.check_password("CiderMoon!56Little"))
+        self.assertFalse(user.is_active)
         self.assertEqual(user.profile.handle, f"m_{user.pk}")
         self.assertEqual(user.profile.display_name, "Amelia")
-        self.assertRedirects(response, reverse("home"))
+        self.assertRedirects(response, reverse("accounts:verification_sent"))
+        self.assertNotIn("_auth_user_id", self.client.session)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn("one-time link", mail.outbox[0].body)
+
+        verification_link = next(
+            line.strip()
+            for line in mail.outbox[0].body.splitlines()
+            if line.startswith("http://testserver/")
+        )
+        verification_path = verification_link.removeprefix("http://testserver")
+        confirmation = self.client.get(verification_path)
+        self.assertContains(confirmation, "Opening this page does not activate it")
+        user.refresh_from_db()
+        self.assertFalse(user.is_active)
+
+        verified = self.client.post(verification_path)
+        self.assertContains(verified, "Your email is verified.")
+        user.refresh_from_db()
+        self.assertTrue(user.is_active)
+        self.assertContains(self.client.get(verification_path), "That link has expired.")
+
+        signed_in = self.client.post(
+            reverse("accounts:login"),
+            {"username": user.email, "password": "CiderMoon!56Little"},
+        )
+        self.assertRedirects(signed_in, reverse("home"))
         self.assertEqual(int(self.client.session["_auth_user_id"]), user.pk)
 
     def test_registration_rejects_mismatched_and_weak_passwords(self):
@@ -149,6 +179,40 @@ class UserModelTests(TestCase):
         response = client.post(reverse("accounts:password_reset"), {"email": "test@example.com"})
 
         self.assertEqual(response.status_code, 403)
+
+    def test_account_pages_describe_the_configured_email_backend(self):
+        with self.settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend"):
+            self.assertContains(
+                self.client.get(reverse("accounts:login")), "Reset links are sent by email."
+            )
+            self.assertContains(
+                self.client.get(reverse("accounts:register")),
+                "You’ll receive a verification link by email.",
+            )
+            self.assertContains(
+                self.client.get(reverse("accounts:password_reset")),
+                "send a one-time reset link by email",
+            )
+
+    def test_email_verification_requires_csrf_and_expires_after_one_hour(self):
+        user = User.objects.create_user(
+            "pending@example.com", "CiderMoon!56Little", is_active=False
+        )
+        uidb64 = urlsafe_base64_encode(str(user.pk).encode())
+        token = email_verification_token.make_token(user)
+        verify_url = reverse("accounts:verify_email", kwargs={"uidb64": uidb64, "token": token})
+        client = Client(enforce_csrf_checks=True)
+        self.assertContains(client.get(verify_url), "Confirm your email address")
+        rejected = client.post(verify_url)
+        self.assertEqual(rejected.status_code, 403)
+        user.refresh_from_db()
+        self.assertFalse(user.is_active)
+
+        with self.settings(PASSWORD_RESET_TIMEOUT=-1):
+            expired = self.client.get(verify_url)
+        self.assertContains(expired, "That link has expired.")
+        user.refresh_from_db()
+        self.assertFalse(user.is_active)
 
 
 class ProfileEditViewTests(TestCase):

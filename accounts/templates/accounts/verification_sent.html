@@ -1,0 +1,8 @@
+{% extends "accounts/base_auth.html" %}
+{% block title %}Verify your email · Meeble{% endblock %}
+{% block content %}
+  <span class="auth-eyebrow">ONE QUICK CHECK</span>
+  <h1 id="auth-title">Check your local terminal.</h1>
+  <p class="auth-intro">{% if console_email %}A one-time email verification link is printed in the terminal running Meeble.{% else %}A one-time email verification link has been sent to your email address.{% endif %} Open it in this browser, then confirm to activate your account. It expires after one hour.</p>
+  <p class="auth-switch"><a href="{% url 'accounts:login' %}">Back to sign in</a></p>
+{% endblock %}

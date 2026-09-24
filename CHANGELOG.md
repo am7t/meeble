@@ -15,6 +15,7 @@
 - Added expiring, visibility-scoped photo stories with sanitized private storage, authenticated image delivery, owner-only deletion, and an explicit expired-media cleanup command.
 - Connected the story row, upload composer, and viewer to the local stories API with responsive visual treatment and accessible controls.
 - Added offline password recovery with one-use Django reset tokens and a console email backend, plus environment-configurable delivery backends.
+- Required one-time email verification for new accounts with expiry, CSRF-protected confirmation, and no account activation from link-scanner GET requests.
 - Added the incremental implementation backlog in `GITHUB_ISSUES.md`.
 
 

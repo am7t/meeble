@@ -1,0 +1,18 @@
+{% extends "accounts/base_auth.html" %}
+{% block title %}Verify your email · Meeble{% endblock %}
+{% block content %}
+  {% if valid_link %}
+    <span class="auth-eyebrow">ONE QUICK CHECK</span>
+    <h1 id="auth-title">Make this account yours.</h1>
+    <p class="auth-intro">Confirm your email address to activate this local Meeble account. Opening this page does not activate it; press the button to continue.</p>
+    <form class="auth-form" method="post">
+      {% csrf_token %}
+      <button class="auth-submit" type="submit">Verify email <span aria-hidden="true">→</span></button>
+    </form>
+  {% else %}
+    <span class="auth-eyebrow">LINK NO LONGER ACTIVE</span>
+    <h1 id="auth-title">That link has expired.</h1>
+    <p class="auth-intro">Verification links work once and expire after one hour. Create a fresh account to get a new link.</p>
+    <a class="auth-submit" href="{% url 'accounts:register' %}">Create an account <span aria-hidden="true">→</span></a>
+  {% endif %}
+{% endblock %}

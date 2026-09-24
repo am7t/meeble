@@ -15,7 +15,7 @@
     {% endfor %}
     <button class="auth-submit" type="submit">Sign in to Meeble <span aria-hidden="true">→</span></button>
   </form>
-  <p class="auth-reset-link"><a href="{% url 'accounts:password_reset' %}">Forgot your password?</a><span>Reset links appear in the local server terminal.</span></p>
+  <p class="auth-reset-link"><a href="{% url 'accounts:password_reset' %}">Forgot your password?</a><span>{% if console_email %}Reset links appear in the local server terminal.{% else %}Reset links are sent by email.{% endif %}</span></p>
   <p class="auth-switch">New around here? <a href="{% url 'accounts:register' %}">Make an account</a></p>
   <p class="auth-provider-note">Google and Apple sign-in need online provider setup. This local preview uses email and password.</p>
 {% endblock %}
