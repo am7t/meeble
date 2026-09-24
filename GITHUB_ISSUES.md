@@ -34,13 +34,13 @@ This is the implementation backlog for Meeble in reviewable slices. Issues are t
 
 ## Social features
 
-8. **Move feed posts and reactions to SQLite-backed endpoints**
-   - Preserve the seeded showcase feed for first run.
-   - Add authenticated create, edit, delete, like, and pagination flows.
-   - Enforce ownership and visibility on every protected operation.
-9. **Add comments, follows, and feed privacy rules**
-   - Support safe text, reactions, and follow relationships.
-   - Cover object-level access boundaries with integration/security tests.
+8. **[In progress] Move feed posts and reactions to SQLite-backed endpoints**
+   - Preserve the seeded showcase feed for first run. Its interactions remain in browser storage as fictional showcase data.
+   - Authenticated post creation, deletion, comments, reactions, and paginated database feed reads are in place; post editing remains.
+   - Enforce ownership and visibility on every protected operation, including public/follower/private post reads.
+9. **[In progress] Add comments, follows, and feed privacy rules**
+   - Safe comments and reactions work on SQLite-backed posts. Add follow/unfollow flows and expand feed privacy rules.
+   - Cover object-level access boundaries with integration/security tests; base visibility regression coverage is in place.
 10. **Add stories and expiration**
     - Support story creation, viewing, deletion, visibility checks, and expiration.
     - Ensure expired stories are excluded from normal API access.

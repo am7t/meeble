@@ -94,6 +94,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .post-card:hover { transform: translateY(-2px); box-shadow: inset 0 1px 0 rgba(255,255,255,.98), 0 4px 0 #d7d6cb, 0 17px 34px rgba(51,57,43,.16); }
 .post-top { display: flex; align-items: center; gap: 10px; padding: 14px 16px 9px; }
 .post-top .avatar { width: 37px; height: 37px; flex: 0 0 auto; }
+.avatar-initial { display: grid; place-items: center; border: 1px solid rgba(255,255,255,.9); background: linear-gradient(145deg,#dce4d0,#adbea0); color: #4f644d; font: 800 15px/1 var(--display); }
 .post-author { min-width: 0; }
 .post-author strong { display: block; font-size: 12px; font-weight: 800; letter-spacing: -.12px; }
 .post-author small { display: block; margin-top: 3px; color: #999a90; font-size: 9px; }

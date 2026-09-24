@@ -38,6 +38,11 @@ function loadState() {
 
 let state = loadState();
 const feed = document.querySelector('#feed');
+const authenticated = document.body.dataset.authenticated === 'true';
+const currentDisplayName = document.body.dataset.displayName || 'Amelia Rose';
+const currentHandle = document.body.dataset.handle || '@amelia.rose';
+let serverPosts = [];
+let nextServerPage = null;
 
 const today = new Date();
 document.querySelector('#todayLabel').textContent = new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).format(today);
@@ -63,17 +68,22 @@ function postTemplate(post) {
   const artFile = { cafe: `${window.MEEBLE_ASSETS}post-cafe.svg`, sunday: `${window.MEEBLE_ASSETS}post-sunday.svg`, flowers: `${window.MEEBLE_ASSETS}post-flowers.svg` }[art];
   const caption = escapeHTML(post.caption).replace(/(^|\s)(#[\p{L}\p{N}_]+)/gu, '$1<span class="hashtag">$2</span>');
   const media = artFile ? `<div class="post-art" role="img" aria-label="${escapeHTML(post.artLabel || `Illustration for ${post.author}'s post`)}"><img src="${artFile}" alt=""></div>` : '';
+  const avatarMarkup = post.avatar && ['amelia', 'jules', 'lila', 'nina', 'maya'].includes(post.avatar)
+    ? `<img class="avatar" src="${window.MEEBLE_ASSETS}avatar-${avatar}.svg" alt="">`
+    : `<span class="avatar avatar-initial" aria-hidden="true">${escapeHTML(post.author.slice(0, 1).toUpperCase())}</span>`;
+  const commentCount = Number.isSafeInteger(post.commentCount) ? post.commentCount : post.comments.length;
+  const menuLabel = post.serverId && post.canDelete ? 'Delete post' : 'Post options';
   return `<article class="post-card" data-id="${escapeHTML(post.id)}">
-    <div class="post-top"><img class="avatar" src="${window.MEEBLE_ASSETS}avatar-${avatar}.svg" alt=""><div class="post-author"><strong>${escapeHTML(post.author)}</strong><small>${escapeHTML(post.handle)} <span>·</span> ${escapeHTML(post.time)}</small></div><button class="post-menu" aria-label="Post options" data-action="menu">···</button></div>
+    <div class="post-top">${avatarMarkup}<div class="post-author"><strong>${escapeHTML(post.author)}</strong><small>${escapeHTML(post.handle)} <span>·</span> ${escapeHTML(post.time)}</small></div><button class="post-menu" aria-label="${menuLabel}" data-action="menu">···</button></div>
     <p class="post-caption"><strong>${escapeHTML(post.author.split(' ')[0])}</strong> ${caption}</p>
     ${media}
-    <div class="post-actions"><button class="action-btn ${post.liked ? 'liked' : ''}" data-action="like" aria-label="${post.liked ? 'Unlike' : 'Like'} post" aria-pressed="${post.liked}"><svg class="icon"><use href="#i-heart"/></svg><span>${post.likes}</span></button><button class="action-btn" data-action="focus-comment" aria-label="Comment"><svg class="icon"><use href="#i-comment"/></svg><span>${post.comments.length || ''}</span></button><button class="action-btn" data-action="share" aria-label="Share post"><svg class="icon"><use href="#i-send"/></svg></button><span class="action-spacer"></span><button class="action-btn bookmark-btn ${state.saved.includes(post.id) ? 'saved' : ''}" data-action="bookmark" aria-label="${state.saved.includes(post.id) ? 'Remove saved post' : 'Save post'}" aria-pressed="${state.saved.includes(post.id)}"><svg class="icon"><use href="#i-bookmark"/></svg></button></div>
-    <div class="comments-area">${post.comments.map((comment) => `<div class="comment"><strong>${escapeHTML(comment.name)}</strong>${escapeHTML(comment.text)}</div>`).join('')}<form class="comment-form"><input name="comment" maxlength="240" aria-label="Write a comment" placeholder="Leave a little love…" required><button type="submit">Post</button></form></div>
+    <div class="post-actions"><button class="action-btn ${post.liked ? 'liked' : ''}" data-action="like" aria-label="${post.liked ? 'Unlike' : 'Like'} post" aria-pressed="${post.liked}"><svg class="icon"><use href="#i-heart"/></svg><span>${post.likes}</span></button><button class="action-btn" data-action="focus-comment" aria-label="Comment"><svg class="icon"><use href="#i-comment"/></svg><span>${commentCount || ''}</span></button><button class="action-btn" data-action="share" aria-label="Share post"><svg class="icon"><use href="#i-send"/></svg></button><span class="action-spacer"></span><button class="action-btn bookmark-btn ${state.saved.includes(post.id) ? 'saved' : ''}" data-action="bookmark" aria-label="${state.saved.includes(post.id) ? 'Remove saved post' : 'Save post'}" aria-pressed="${state.saved.includes(post.id)}"><svg class="icon"><use href="#i-bookmark"/></svg></button></div>
+    <div class="comments-area">${post.comments.map((comment) => `<div class="comment"><strong>${escapeHTML(comment.name)}</strong>${escapeHTML(comment.text)}</div>`).join('')}<form class="comment-form"><input name="comment" maxlength="500" aria-label="Write a comment" placeholder="Leave a little love…" required><button type="submit">Post</button></form></div>
   </article>`;
 }
 
 function render() {
-  const visiblePosts = state.posts.filter((post) => !state.hidden.includes(post.id));
+  const visiblePosts = [...serverPosts, ...state.posts].filter((post) => !state.hidden.includes(post.id));
   feed.innerHTML = visiblePosts.map(postTemplate).join('') || '<div class="empty-feed"><span>♡</span><h3>Your feed is waiting for a little love.</h3><p>Create a post to get things started.</p></div>';
 }
 
@@ -97,28 +107,109 @@ function showToast(message) {
   dialog.showModal();
 }
 
-feed.addEventListener('click', (event) => {
+async function apiRequest(path, { method = 'GET', data } = {}) {
+  const headers = { Accept: 'application/json' };
+  const options = { method, credentials: 'same-origin', headers };
+  if (data) {
+    headers['Content-Type'] = 'application/x-www-form-urlencoded;charset=UTF-8';
+    headers['X-CSRFToken'] = document.querySelector('meta[name="csrf-token"]').content;
+    options.body = new URLSearchParams(data);
+  }
+  const response = await fetch(path, options);
+  if (response.status === 204) return null;
+  let payload = {};
+  try { payload = await response.json(); } catch (error) { /* Non-JSON error responses use a friendly fallback below. */ }
+  if (!response.ok) {
+    const fallback = response.status === 404 ? 'That post is no longer available.' : 'Meeble could not save that change.';
+    throw new Error(payload.error || fallback);
+  }
+  return payload;
+}
+
+function relativeTime(value) {
+  const timestamp = new Date(value).getTime();
+  if (!Number.isFinite(timestamp)) return 'a little while ago';
+  const minutes = Math.max(0, Math.floor((Date.now() - timestamp) / 60000));
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} hr${hours === 1 ? '' : 's'} ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days} day${days === 1 ? '' : 's'} ago`;
+  return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(timestamp);
+}
+
+function mapServerPost(post) {
+  return {
+    id: post.id,
+    serverId: post.server_id,
+    author: post.author,
+    handle: post.handle,
+    avatar: null,
+    time: relativeTime(post.time),
+    caption: post.caption,
+    art: 'custom',
+    artLabel: '',
+    likes: post.likes,
+    liked: post.liked,
+    comments: post.comments.map((comment) => ({ name: comment.name, text: comment.text })),
+    commentCount: post.comment_count,
+    canDelete: post.can_delete === true
+  };
+}
+
+async function loadServerFeed(page = 1) {
+  try {
+    const response = await apiRequest(`${window.MEEBLE_API.feed}?page=${page}`);
+    const fetchedPosts = response.results.map(mapServerPost);
+    serverPosts = page === 1 ? fetchedPosts : [...serverPosts, ...fetchedPosts];
+    nextServerPage = response.next_page;
+    render();
+  } catch (error) {
+    showToast(error.message || 'Your saved posts could not be loaded. Try again in a moment.');
+  }
+}
+
+feed.addEventListener('click', async (event) => {
   const button = event.target.closest('[data-action]');
   if (!button) return;
   const card = button.closest('.post-card');
   const post = state.posts.find((item) => item.id === card?.dataset.id);
   if (!post) return;
   if (button.dataset.action === 'like') {
-    post.liked = !post.liked;
-    post.likes = Math.max(0, post.likes + (post.liked ? 1 : -1));
-    saveState(); render();
+    if (post.serverId) {
+      try {
+        const result = await apiRequest(`${window.MEEBLE_API.posts}${post.serverId}/reactions/toggle/`, { method: 'POST', data: {} });
+        post.liked = result.liked;
+        post.likes = result.count;
+        render();
+      } catch (error) { showToast(error.message); }
+    } else {
+      post.liked = !post.liked;
+      post.likes = Math.max(0, post.likes + (post.liked ? 1 : -1));
+      saveState(); render();
+    }
   } else if (button.dataset.action === 'focus-comment') card.querySelector('[name="comment"]').focus();
   else if (button.dataset.action === 'bookmark') {
     state.saved = state.saved.includes(post.id) ? state.saved.filter((id) => id !== post.id) : [...state.saved, post.id];
     saveState(); render();
   } else if (button.dataset.action === 'share') showToast('Sharing a little moment with a friend is coming soon ♡');
   else if (button.dataset.action === 'menu') {
-    const remove = confirm('Hide this post from your local demo feed?');
-    if (remove) { state.hidden.push(post.id); saveState(); render(); }
+    if (post.serverId && post.canDelete) {
+      if (!confirm('Delete this post from your Meeble space? This also removes its comments and reactions.')) return;
+      try {
+        await apiRequest(`${window.MEEBLE_API.posts}${post.serverId}/delete/`, { method: 'POST', data: {} });
+        serverPosts = serverPosts.filter((item) => item.id !== post.id);
+        render();
+      } catch (error) { showToast(error.message); }
+    } else {
+      const remove = confirm('Hide this post from your local demo feed?');
+      if (remove) { state.hidden.push(post.id); saveState(); render(); }
+    }
   }
 });
 
-feed.addEventListener('submit', (event) => {
+feed.addEventListener('submit', async (event) => {
   if (!event.target.matches('.comment-form')) return;
   event.preventDefault();
   const card = event.target.closest('.post-card');
@@ -126,18 +217,45 @@ feed.addEventListener('submit', (event) => {
   const input = event.target.elements.comment;
   const text = input.value.trim();
   if (!post || !text) return;
-  post.comments.push({ name: 'amelia rose', text });
-  saveState(); render();
+  if (post.serverId) {
+    try {
+      const result = await apiRequest(`${window.MEEBLE_API.posts}${post.serverId}/comments/`, { method: 'POST', data: { body: text } });
+      post.comments.push({ name: result.comment.name, text: result.comment.text });
+      post.commentCount = result.comment_count;
+      render();
+    } catch (error) { showToast(error.message); }
+  } else {
+    post.comments.push({ name: currentDisplayName.toLowerCase(), text });
+    saveState(); render();
+  }
 });
 
 const composer = document.querySelector('#composer');
-document.querySelector('#openComposer').addEventListener('click', () => composer.showModal());
-document.querySelector('#postForm').addEventListener('submit', (event) => {
+document.querySelector('#composer label').textContent = `What’s on your mind, ${currentDisplayName}?`;
+document.querySelector('#closeComposer').addEventListener('click', () => composer.close());
+document.querySelector('#openComposer').addEventListener('click', () => {
+  if (!authenticated) {
+    showToast('Make a local account to share posts that stay with your Meeble space ♡');
+    return;
+  }
+  composer.showModal();
+});
+document.querySelector('#postForm').addEventListener('submit', async (event) => {
   event.preventDefault();
   const caption = document.querySelector('#postCaption').value.trim();
   if (!caption) return;
-  state.posts.unshift({ id: `p${Date.now()}`, author: 'amelia rose', handle: '@amelia.rose', avatar: 'amelia', time: 'just now', caption, art: 'custom', artLabel: 'a little moment ♡', likes: 0, liked: false, comments: [] });
-  saveState(); render(); composer.close(); event.target.reset();
+  if (!authenticated) {
+    showToast('Sign in to save a post to your own Meeble space.');
+    return;
+  }
+  try {
+    const result = await apiRequest(window.MEEBLE_API.posts, { method: 'POST', data: { body: caption } });
+    serverPosts.unshift(mapServerPost(result));
+    render(); composer.close(); event.target.reset();
+  } catch (error) {
+    showToast(error.message || 'Your post could not be saved. Try again.');
+    return;
+  }
   document.querySelector('#feed').scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 document.querySelector('#addPhoto').addEventListener('click', () => showToast('Photo sharing is coming soon. Your demo feed is ready for your words ♡'));
@@ -166,6 +284,13 @@ document.querySelector('.notification-button').addEventListener('click', () => s
 document.querySelector('.search-button').addEventListener('click', () => showToast('Search is coming soon. Your people are easy to find ♡'));
 document.querySelector('.birthday-person button').addEventListener('click', () => showToast('Birthday wishes are on their way ♡'));
 document.querySelector('.find-friends').addEventListener('click', () => showToast('Finding your people is coming soon ♡'));
-document.querySelector('#loadMore').addEventListener('click', () => showToast('You’re all caught up on the good stuff ♡'));
+document.querySelector('#loadMore').addEventListener('click', () => {
+  if (authenticated && nextServerPage) {
+    loadServerFeed(nextServerPage);
+    return;
+  }
+  showToast('You’re all caught up on the good stuff ♡');
+});
 
 render();
+if (authenticated) loadServerFeed();

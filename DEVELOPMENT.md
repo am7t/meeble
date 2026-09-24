@@ -22,4 +22,4 @@ Keep modules readable and feature-focused. Use native dialogs and controls where
 
 ## Local app
 
-The local Django server and SQLite schema are in place. Apply committed migrations with `python manage.py migrate`. The database enables SQLite foreign keys; migrations add checks, uniqueness rules, and indexes for current domain tables. Keep a reproducible dependency manifest, put the SQLite file and private media outside tracked source, and preserve a local-only run command. Do not add cloud credentials or publicly expose the development server by default.
+The local Django server and SQLite schema are in place. Apply committed migrations with `python manage.py migrate`. Authenticated feed routes live under `/api/`; the client sends Django's CSRF token on every mutation. The database enables SQLite foreign keys; migrations add checks, uniqueness rules, and indexes for current domain tables. Keep a reproducible dependency manifest, put the SQLite file and private media outside tracked source, and preserve a local-only run command. Do not add cloud credentials or publicly expose the development server by default.

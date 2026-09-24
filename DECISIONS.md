@@ -37,3 +37,13 @@
 **Reason:** Relational constraints provide a reliable base before endpoint authorization is added and keep account credentials separate from public profile data. Seeded showcase content remains available while the UI is migrated incrementally.
 
 **Tradeoff:** Creating the schema alone does not make browser storage trusted or enforce user access. The profile editor is tied to the signed-in account; future endpoints must explicitly check ownership and visibility, with denied-access tests, before exposing social records.
+
+## D-005: Separate fictional sample content from account-owned feed records
+
+**Status:** Accepted
+
+**Decision:** Keep the fictional first-run feed as client-side showcase data. Store posts created by signed-in users, and their comments/reactions, in SQLite through authenticated same-origin endpoints. Do not silently import existing browser-storage content into an account.
+
+**Reason:** The showcase should remain populated without requiring seed accounts, while private or user-written local browser data is untrusted and must not be promoted into server-owned records without the user explicitly submitting it.
+
+**Tradeoff:** Reactions and comments on fictional seed posts remain local showcase interactions for now; pagination and visibility rules apply to database-backed account posts.

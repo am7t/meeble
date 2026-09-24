@@ -8,6 +8,7 @@
 - Added Ruff lint/format checks, JavaScript syntax checking, Django checks, migration validation, and automated tests to CI.
 - Added SQLite profile, post, comment, reaction, and follow models with migrations, integrity constraints, indexes, and database-level regression tests.
 - Added a signed-in profile editor with server-validated handles and persisted theme/layout settings.
+- Added authenticated, paginated post APIs with SQLite-backed comments/reactions, visibility filtering, and owner-only deletion; connected signed-in feed actions to the local server.
 - Added the incremental implementation backlog in `GITHUB_ISSUES.md`.
 
 

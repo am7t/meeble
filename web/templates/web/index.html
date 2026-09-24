@@ -6,11 +6,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f5f4ef">
   <meta name="description" content="Meeble — a little place for all the good bits.">
+  <meta name="csrf-token" content="{{ csrf_token }}">
   <title>Meeble — a little place for you</title>
   <link rel="icon" type="image/svg+xml" href="{% static 'web/assets/mascot.svg' %}">
   <link rel="stylesheet" href="{% static 'web/styles.css' %}">
 </head>
-<body>
+<body data-authenticated="{{ user.is_authenticated|yesno:'true,false' }}" data-display-name="{% if user.is_authenticated %}{{ user.profile.display_name }}{% else %}Amelia Rose{% endif %}" data-handle="{% if user.is_authenticated %}@{{ user.profile.handle }}{% else %}@amelia.rose{% endif %}">
   <svg class="icon-defs" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
     <symbol id="i-home" viewBox="0 0 24 24"><path d="m3.5 10 8.5-7 8.5 7v10.5H14v-7h-4v7H3.5z"/></symbol>
     <symbol id="i-discover" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="7.2"/><path d="m16.2 16.2 4.3 4.3M13.8 8l-1.7 4.1-4.1 1.7 1.7-4.1z"/></symbol>
@@ -53,9 +54,9 @@
       </div>
     </main>
   </div>
-  <dialog id="composer" class="composer-dialog"><form method="dialog" id="postForm"><button class="dialog-close" aria-label="Close">×</button><div class="dialog-eyebrow">A LITTLE SOMETHING</div><h2>Share a moment</h2><label for="postCaption">What’s on your mind, Amelia?</label><textarea id="postCaption" maxlength="500" placeholder="The little things are the big things…" required></textarea><div class="composer-tools"><button type="button" id="addPhoto">▧ Add a photo</button><span>♡ shared with your people</span></div><button class="publish-button" type="submit">Share with your people <svg class="icon"><use href="#i-arrow"/></svg></button></form></dialog>
+  <dialog id="composer" class="composer-dialog"><form method="dialog" id="postForm"><button class="dialog-close" id="closeComposer" type="button" aria-label="Close">×</button><div class="dialog-eyebrow">A LITTLE SOMETHING</div><h2>Share a moment</h2><label for="postCaption">What’s on your mind?</label><textarea id="postCaption" maxlength="500" placeholder="The little things are the big things…" required></textarea><div class="composer-tools"><button type="button" id="addPhoto">▧ Add a photo</button><span>♡ shared with your people</span></div><button class="publish-button" type="submit">Share with your people <svg class="icon"><use href="#i-arrow"/></svg></button></form></dialog>
   <dialog id="toastDialog" class="toast-dialog"><p id="toastMessage"></p><button id="toastClose">Okay ♡</button></dialog>
-  <script>window.MEEBLE_ASSETS = "{% static 'web/assets/' %}";</script>
+  <script>window.MEEBLE_ASSETS = "{% static 'web/assets/' %}"; window.MEEBLE_API = { feed: "{% url 'social:feed' %}", posts: "{% url 'social:create-post' %}" };</script>
   <script src="{% static 'web/app.js' %}" defer></script>
 </body>
 </html>

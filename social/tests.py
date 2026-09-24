@@ -1,5 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError, connection, transaction
+from django.urls import reverse
+from django.test import Client
 from django.test import TestCase
 from accounts.models import Profile
 from .models import Comment, Follow, Post, Reaction
@@ -64,6 +66,144 @@ class SocialSchemaTests(TestCase):
         self.assertFalse(Profile.objects.filter(handle="amelia").exists())
         self.assertFalse(Post.objects.filter(pk=self.post.pk).exists())
 
-    @staticmethod
-    def create_user(email):
-        return get_user_model().objects.create_user(email, "safe demo password")
+
+class FeedAPITests(TestCase):
+    def setUp(self):
+        User = get_user_model()
+        self.amelia = User.objects.create_user("amelia@example.com", "safe demo password")
+        self.jules = User.objects.create_user("jules@example.com", "safe demo password")
+        self.feed_url = reverse("social:feed")
+        self.create_url = reverse("social:create-post")
+
+    def test_feed_api_requires_authentication(self):
+        response = self.client.get(self.feed_url)
+
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.json()["error"], "Sign in to use your local feed.")
+
+    def test_create_post_uses_signed_in_owner_and_validates_body(self):
+        self.client.force_login(self.amelia)
+        response = self.client.post(
+            self.create_url,
+            {"body": "  A new little moment  ", "author": self.jules.pk},
+        )
+
+        self.assertEqual(response.status_code, 201)
+        post = Post.objects.get()
+        self.assertEqual(post.author, self.amelia)
+        self.assertEqual(post.body, "A new little moment")
+        self.assertEqual(response.json()["server_id"], post.pk)
+        self.assertEqual(response.json()["author"], self.amelia.profile.display_name)
+        self.assertEqual(response.json()["likes"], 0)
+        self.assertEqual(response.json()["comment_count"], 0)
+
+        for body in (" ", "x" * 501):
+            rejected = self.client.post(self.create_url, {"body": body})
+            self.assertEqual(rejected.status_code, 400)
+        self.assertEqual(Post.objects.count(), 1)
+
+    def test_feed_respects_public_followers_and_private_visibility(self):
+        public_post = Post.objects.create(
+            author=self.jules, body="Public moment", visibility=Post.Visibility.PUBLIC
+        )
+        followers_post = Post.objects.create(
+            author=self.jules, body="For followers", visibility=Post.Visibility.FOLLOWERS
+        )
+        private_post = Post.objects.create(
+            author=self.jules, body="Just for me", visibility=Post.Visibility.PRIVATE
+        )
+        self.client.force_login(self.amelia)
+
+        response = self.client.get(self.feed_url)
+        ids = {item["server_id"] for item in response.json()["results"]}
+        self.assertIn(public_post.pk, ids)
+        self.assertNotIn(followers_post.pk, ids)
+        self.assertNotIn(private_post.pk, ids)
+
+        Follow.objects.create(follower=self.amelia, followed=self.jules)
+        followed_response = self.client.get(self.feed_url)
+        followed_ids = {item["server_id"] for item in followed_response.json()["results"]}
+        self.assertIn(followers_post.pk, followed_ids)
+        self.assertNotIn(private_post.pk, followed_ids)
+
+    def test_feed_paginates_and_rejects_invalid_page_numbers(self):
+        self.client.force_login(self.amelia)
+        Post.objects.bulk_create(
+            [Post(author=self.amelia, body=f"Moment {number}") for number in range(21)]
+        )
+
+        first = self.client.get(self.feed_url)
+        second = self.client.get(self.feed_url, {"page": "2"})
+
+        self.assertEqual(len(first.json()["results"]), 20)
+        self.assertEqual(first.json()["next_page"], 2)
+        self.assertEqual(len(second.json()["results"]), 1)
+        self.assertIsNone(second.json()["next_page"])
+        self.assertEqual(self.client.get(self.feed_url, {"page": "nope"}).status_code, 400)
+        self.assertEqual(self.client.get(self.feed_url, {"page": "0"}).status_code, 400)
+
+    def test_reaction_toggle_and_comments_use_the_session_user(self):
+        post = Post.objects.create(author=self.amelia, body="A public thought")
+        self.client.force_login(self.jules)
+        reaction_url = reverse("social:toggle-reaction", args=[post.pk])
+        comment_url = reverse("social:create-comment", args=[post.pk])
+
+        liked = self.client.post(reaction_url)
+        unliked = self.client.post(reaction_url)
+        comment = self.client.post(comment_url, {"body": "That made me smile."})
+
+        self.assertEqual(liked.json(), {"liked": True, "count": 1})
+        self.assertEqual(unliked.json(), {"liked": False, "count": 0})
+        self.assertEqual(comment.status_code, 201)
+        saved_comment = Comment.objects.get()
+        self.assertEqual(saved_comment.author, self.jules)
+        self.assertEqual(saved_comment.post, post)
+        self.assertEqual(comment.json()["comment"]["name"], self.jules.profile.display_name)
+
+        self.client.force_login(self.amelia)
+        feed_item = self.client.get(self.feed_url).json()["results"][0]
+        self.assertEqual(feed_item["likes"], 0)
+        self.assertEqual(feed_item["comment_count"], 1)
+        self.assertEqual(feed_item["comments"][0]["text"], "That made me smile.")
+
+    def test_private_posts_hide_all_actions_from_non_owners(self):
+        post = Post.objects.create(
+            author=self.amelia, body="Private note", visibility=Post.Visibility.PRIVATE
+        )
+        self.client.force_login(self.jules)
+
+        reaction = self.client.post(reverse("social:toggle-reaction", args=[post.pk]))
+        comment = self.client.post(
+            reverse("social:create-comment", args=[post.pk]), {"body": "I can see this?"}
+        )
+        deletion = self.client.post(reverse("social:delete-post", args=[post.pk]))
+
+        self.assertEqual(reaction.status_code, 404)
+        self.assertEqual(comment.status_code, 404)
+        self.assertEqual(deletion.status_code, 404)
+        self.assertTrue(Post.objects.filter(pk=post.pk).exists())
+        self.assertFalse(Comment.objects.exists())
+        self.assertFalse(Reaction.objects.exists())
+
+    def test_only_the_post_owner_can_delete_a_post(self):
+        post = Post.objects.create(author=self.amelia, body="Keep this safe")
+        self.client.force_login(self.jules)
+
+        denied = self.client.post(reverse("social:delete-post", args=[post.pk]))
+
+        self.assertEqual(denied.status_code, 404)
+        self.assertTrue(Post.objects.filter(pk=post.pk).exists())
+
+        self.client.force_login(self.amelia)
+        deleted = self.client.post(reverse("social:delete-post", args=[post.pk]))
+        self.assertEqual(deleted.status_code, 204)
+        self.assertFalse(Post.objects.filter(pk=post.pk).exists())
+
+    def test_feed_mutations_require_csrf(self):
+        client = Client(enforce_csrf_checks=True)
+        client.force_login(self.amelia)
+
+        response = client.post(self.create_url, {"body": "A CSRF protected moment"})
+
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(Post.objects.exists())
