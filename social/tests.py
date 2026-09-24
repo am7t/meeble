@@ -1,10 +1,21 @@
+from datetime import timedelta
+from io import BytesIO
+from os.path import exists
+from pathlib import Path
+from tempfile import TemporaryDirectory
+
+from PIL import Image
 from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.management import call_command
 from django.db import IntegrityError, connection, transaction
 from django.urls import reverse
 from django.test import Client
 from django.test import TestCase
+from django.test.utils import override_settings
+from django.utils import timezone
 from accounts.models import Profile
-from .models import Comment, Follow, Post, Reaction
+from .models import Comment, Follow, Post, Reaction, Story
 
 
 class SocialSchemaTests(TestCase):
@@ -303,3 +314,193 @@ class FeedAPITests(TestCase):
 
         self.assertEqual(response.status_code, 403)
         self.assertFalse(Post.objects.exists())
+
+
+class StoryAPITests(TestCase):
+    def setUp(self):
+        User = get_user_model()
+        self.owner = User.objects.create_user("jules@example.com", "safe demo password")
+        self.viewer = User.objects.create_user("amelia@example.com", "safe demo password")
+        self.owner.profile.handle = "jules"
+        self.owner.profile.display_name = "Jules Parker"
+        self.owner.profile.save()
+        self.viewer.profile.handle = "amelia"
+        self.viewer.profile.display_name = "Amelia Rose"
+        self.viewer.profile.save()
+        self.media_directory = TemporaryDirectory()
+        self.addCleanup(self.media_directory.cleanup)
+        self.media_settings = override_settings(MEDIA_ROOT=self.media_directory.name)
+        self.media_settings.enable()
+        self.addCleanup(self.media_settings.disable)
+        self.list_url = reverse("social:stories")
+        self.create_url = reverse("social:create-story")
+
+    @staticmethod
+    def upload(name="my-photo.png", image_format="PNG", size=(12, 8)):
+        output = BytesIO()
+        Image.new("RGBA", size, (194, 218, 176, 180)).save(output, image_format)
+        content_type = {"PNG": "image/png", "JPEG": "image/jpeg", "WEBP": "image/webp"}.get(
+            image_format, "application/octet-stream"
+        )
+        return SimpleUploadedFile(name, output.getvalue(), content_type=content_type)
+
+    def add_story(
+        self,
+        author,
+        caption,
+        visibility=Story.Visibility.PUBLIC,
+        expires_in=timedelta(hours=24),
+    ):
+        story = Story(
+            author=author,
+            caption=caption,
+            visibility=visibility,
+            expires_at=timezone.now() + expires_in,
+        )
+        story.image.save("original-name.png", self.upload(), save=False)
+        story.save()
+        return story
+
+    def test_story_endpoints_require_authentication(self):
+        self.assertEqual(self.client.get(self.list_url).status_code, 401)
+        self.assertEqual(self.client.post(self.create_url, {}).status_code, 401)
+        image_url = reverse("social:story-image", args=[1])
+        self.assertEqual(self.client.get(image_url).status_code, 401)
+
+    def test_create_story_sanitizes_image_and_sets_a_24_hour_expiry(self):
+        self.client.force_login(self.owner)
+
+        response = self.client.post(
+            self.create_url,
+            {
+                "image": self.upload(),
+                "caption": "  A tiny bit of sunshine  ",
+                "visibility": Story.Visibility.FOLLOWERS,
+            },
+        )
+
+        self.assertEqual(response.status_code, 201)
+        story = Story.objects.get()
+        self.assertEqual(story.author, self.owner)
+        self.assertEqual(story.caption, "A tiny bit of sunshine")
+        self.assertEqual(story.visibility, Story.Visibility.FOLLOWERS)
+        self.assertLessEqual(
+            abs((story.expires_at - story.created_at) - timedelta(hours=24)), timedelta(seconds=2)
+        )
+        self.assertTrue(story.image.name.startswith("stories/"))
+        self.assertTrue(story.image.name.endswith(".jpg"))
+        self.assertNotIn("original-name", story.image.name)
+        with Image.open(story.image.path) as saved_image:
+            self.assertEqual(saved_image.format, "JPEG")
+            self.assertEqual(saved_image.mode, "RGB")
+            self.assertEqual(saved_image.getexif(), {})
+        self.assertEqual(
+            response.json()["image_url"], reverse("social:story-image", args=[story.pk])
+        )
+
+        delivered = self.client.get(response.json()["image_url"])
+        self.assertEqual(delivered.status_code, 200)
+        self.assertEqual(delivered["Content-Type"], "image/jpeg")
+        self.assertEqual(delivered["Cache-Control"], "private, no-store")
+        self.assertEqual(delivered["X-Content-Type-Options"], "nosniff")
+        self.assertTrue(b"".join(delivered.streaming_content))
+
+    def test_story_upload_rejects_missing_invalid_oversize_and_invalid_caption_data(self):
+        self.client.force_login(self.owner)
+        missing = self.client.post(self.create_url, {"caption": "No photo"})
+        invalid = self.client.post(
+            self.create_url,
+            {"image": SimpleUploadedFile("fake.png", b"not an image"), "caption": "Nope"},
+        )
+        too_large = self.client.post(
+            self.create_url,
+            {
+                "image": SimpleUploadedFile("big.png", b"x" * (8 * 1024 * 1024 + 1)),
+                "caption": "Too big",
+            },
+        )
+        too_long = self.client.post(self.create_url, {"image": self.upload(), "caption": "x" * 161})
+        bad_visibility = self.client.post(
+            self.create_url,
+            {"image": self.upload(), "caption": "Nope", "visibility": "unlisted"},
+        )
+
+        for response in (missing, invalid, too_large, too_long, bad_visibility):
+            self.assertEqual(response.status_code, 400)
+            self.assertIn("error", response.json())
+        self.assertFalse(Story.objects.exists())
+        self.assertFalse(list(Path(self.media_directory.name).rglob("*.jpg")))
+
+    def test_story_list_and_image_access_follow_visibility_and_expiry(self):
+        public = self.add_story(self.owner, "Everyone can see this")
+        followers_only = self.add_story(
+            self.owner, "For circle only", visibility=Story.Visibility.FOLLOWERS
+        )
+        private = self.add_story(self.owner, "Only me", visibility=Story.Visibility.PRIVATE)
+        expired = self.add_story(self.owner, "Already gone")
+        Story.objects.filter(pk=expired.pk).update(
+            created_at=timezone.now() - timedelta(hours=25),
+            expires_at=timezone.now() - timedelta(hours=1),
+        )
+        self.client.force_login(self.viewer)
+
+        anonymous_relationships = self.client.get(self.list_url)
+        ids = {item["id"] for item in anonymous_relationships.json()["results"]}
+        self.assertIn(public.pk, ids)
+        self.assertNotIn(followers_only.pk, ids)
+        self.assertNotIn(private.pk, ids)
+        self.assertNotIn(expired.pk, ids)
+        self.assertEqual(
+            self.client.get(reverse("social:story-image", args=[followers_only.pk])).status_code,
+            404,
+        )
+        self.assertEqual(
+            self.client.get(reverse("social:story-image", args=[expired.pk])).status_code, 404
+        )
+
+        Follow.objects.create(follower=self.viewer, followed=self.owner)
+        followed_ids = {item["id"] for item in self.client.get(self.list_url).json()["results"]}
+        self.assertIn(followers_only.pk, followed_ids)
+        self.assertNotIn(private.pk, followed_ids)
+        self.client.force_login(self.owner)
+        owner_ids = {item["id"] for item in self.client.get(self.list_url).json()["results"]}
+        self.assertIn(private.pk, owner_ids)
+        self.assertNotIn(expired.pk, owner_ids)
+
+    def test_only_the_story_owner_can_delete_and_file_storage_is_cleaned(self):
+        story = self.add_story(self.owner, "A little memory")
+        image_path = story.image.path
+        self.client.force_login(self.viewer)
+
+        denied = self.client.post(reverse("social:delete-story", args=[story.pk]))
+
+        self.assertEqual(denied.status_code, 404)
+        self.assertTrue(Story.objects.filter(pk=story.pk).exists())
+        self.assertTrue(exists(image_path))
+        self.client.force_login(self.owner)
+        deleted = self.client.post(reverse("social:delete-story", args=[story.pk]))
+        self.assertEqual(deleted.status_code, 204)
+        self.assertFalse(Story.objects.filter(pk=story.pk).exists())
+        self.assertFalse(exists(image_path))
+
+    def test_purge_expired_stories_deletes_rows_and_private_media(self):
+        story = self.add_story(self.owner, "An expired memory")
+        image_path = story.image.path
+        Story.objects.filter(pk=story.pk).update(
+            created_at=timezone.now() - timedelta(hours=25),
+            expires_at=timezone.now() - timedelta(hours=1),
+        )
+
+        call_command("purge_expired_stories")
+
+        self.assertFalse(Story.objects.filter(pk=story.pk).exists())
+        self.assertFalse(exists(image_path))
+
+    def test_story_mutations_require_csrf(self):
+        client = Client(enforce_csrf_checks=True)
+        client.force_login(self.owner)
+
+        response = client.post(self.create_url, {"image": self.upload(), "caption": "Private"})
+
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(Story.objects.exists())

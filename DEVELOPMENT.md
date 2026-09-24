@@ -14,7 +14,7 @@ python manage.py migrate
 python manage.py runserver 127.0.0.1:8000
 ```
 
-Open `http://127.0.0.1:8000`. The SQLite file remains in the project directory and is ignored by Git. Interactions on fictional sample posts remain browser showcase data; signed-in account posts, comments, and reactions use the local API and database.
+Open `http://127.0.0.1:8000`. The SQLite file remains in the project directory and is ignored by Git. Interactions on fictional sample posts remain browser showcase data; signed-in posts, comments, reactions, follows, and stories use the local API and database. Story images live under the ignored `private-media/` directory and are never served as static files.
 
 ## Editing
 
@@ -22,4 +22,4 @@ Keep modules readable and feature-focused. Use native dialogs and controls where
 
 ## Local app
 
-The local Django server and SQLite schema are in place. Apply committed migrations with `python manage.py migrate`. Authenticated feed routes live under `/api/`; the client sends Django's CSRF token on every mutation. Users can create, edit, and delete their own posts, react or comment only on visible posts, and follow other local accounts; the Following feed filters to followed accounts. Public profile pages filter posts by viewer visibility and omit authentication details. The people directory exposes display names, handles, follow state, and follower counts, never email addresses. The database enables SQLite foreign keys; migrations add checks, uniqueness rules, and indexes for current domain tables. Keep a reproducible dependency manifest, put the SQLite file and private media outside tracked source, and preserve a local-only run command. Do not add cloud credentials or publicly expose the development server by default.
+The local Django server and SQLite schema are in place. Apply committed migrations with `python manage.py migrate`. Authenticated feed routes live under `/api/`; the client sends Django's CSRF token on every mutation. Users can create, edit, and delete their own posts, react or comment only on visible posts, follow other local accounts, and create, view, and delete photo stories. Stories expire from normal reads after 24 hours; periodically run `python manage.py purge_expired_stories` to remove their database rows and private image files. Public profile pages filter posts by viewer visibility and omit authentication details. The people directory exposes display names, handles, follow state, and follower counts, never email addresses. The database enables SQLite foreign keys; migrations add checks, uniqueness rules, and indexes for current domain tables. Keep a reproducible dependency manifest, put the SQLite file and private media outside tracked source, and preserve a local-only run command. Do not add cloud credentials or publicly expose the development server by default.

@@ -118,8 +118,35 @@ const stories = [
   { name: 'sophie', avatar: 'jules' },
   { name: 'ella', avatar: 'lila' }
 ];
+let serverStories = [];
+let storyGroups = [];
+let activeStoryGroup = [];
+let activeStoryIndex = 0;
 
-document.querySelector('#storiesRow').innerHTML = stories.map((story) => `<button class="story ${story.own ? 'is-own' : ''}" data-story="${escapeHTML(story.name)}" aria-label="${story.own ? 'Add to your story' : `View ${story.name}'s story`}"><span class="story-ring"><img class="avatar" src="${window.MEEBLE_ASSETS}avatar-${story.avatar}.svg" alt="">${story.own ? '<span class="story-add">+</span>' : ''}</span><span class="story-name">${escapeHTML(story.name)}</span></button>`).join('');
+function buildStoryGroups() {
+  const groups = new Map();
+  for (const story of [...serverStories].sort((a, b) => Date.parse(a.created_at) - Date.parse(b.created_at))) {
+    const group = groups.get(story.author_id) || [];
+    group.push(story);
+    groups.set(story.author_id, group);
+  }
+  storyGroups = [...groups.values()].map((items) => items.sort((a, b) => Date.parse(a.created_at) - Date.parse(b.created_at)));
+}
+
+function renderStories() {
+  buildStoryGroups();
+  const ownGroup = storyGroups.find((group) => group[0].can_delete);
+  const ownLabel = ownGroup?.[0]?.author || 'Your story';
+  const ownAvatar = ownLabel ? `<span class="avatar avatar-initial" aria-hidden="true">${escapeHTML(ownLabel.slice(0, 1).toUpperCase())}</span>` : '';
+  const ownTile = `<button class="story is-own ${ownGroup ? 'has-stories' : ''}" data-story-own aria-label="${ownGroup ? `View ${escapeHTML(ownLabel)}’s story or add a moment` : 'Add to your story'}"><span class="story-ring">${ownAvatar}<span class="story-add story-add-overlay" data-story-add aria-hidden="true">+</span></span><span class="story-name">${ownGroup ? 'Your story' : 'Add story'}</span></button>`;
+  const serverTiles = storyGroups.filter((group) => !group[0].can_delete).map((group) => {
+    const first = group[0];
+    const initial = escapeHTML(first.author.slice(0, 1).toUpperCase());
+    return `<button class="story has-stories" data-story-author="${first.author_id}" aria-label="View ${escapeHTML(first.author)}’s story, ${group.length} ${group.length === 1 ? 'photo' : 'photos'}"><span class="story-ring"><span class="avatar avatar-initial" aria-hidden="true">${initial}</span><span class="story-count">${group.length}</span></span><span class="story-name">${escapeHTML(first.author.split(' ')[0])}</span></button>`;
+  }).join('');
+  const sampleTiles = stories.filter((item) => !item.own).map((item) => `<button class="story" data-sample-story="${escapeHTML(item.name)}" aria-label="View ${escapeHTML(item.name)}’s sample story"><span class="story-ring"><img class="avatar" src="${window.MEEBLE_ASSETS}avatar-${item.avatar}.svg" alt=""></span><span class="story-name">${escapeHTML(item.name)}</span></button>`).join('');
+  document.querySelector('#storiesRow').innerHTML = ownTile + serverTiles + sampleTiles;
+}
 
 document.querySelector('#friendsList').innerHTML = [stories[1], stories[2], stories[3]].map((friend, index) => `<div class="friend-row"><img class="avatar" src="${window.MEEBLE_ASSETS}avatar-${friend.avatar}.svg" alt=""><span class="friend-info"><strong>${friend.name === 'jules' ? 'Jules Parker' : friend.name === 'lila' ? 'Lila Chen' : 'Maya Flowers'}</strong><small>${['probably at a cafe ☕', 'in her soft era ✿', 'sending you a hug ♡'][index]}</small></span><span class="online"></span></div>`).join('');
 
@@ -146,6 +173,49 @@ async function apiRequest(path, { method = 'GET', data } = {}) {
     throw new Error(payload.error || fallback);
   }
   return payload;
+}
+
+function storyTime(story) {
+  const elapsed = Math.max(0, Date.now() - Date.parse(story.created_at));
+  const minutes = Math.floor(elapsed / 60000);
+  return minutes < 1 ? 'just now' : minutes < 60 ? `${minutes}m ago` : `${Math.floor(minutes / 60)}h ago`;
+}
+
+function renderStoryViewer() {
+  const story = activeStoryGroup[activeStoryIndex];
+  if (!story) return;
+  const image = document.querySelector('#storyViewerImage');
+  image.src = story.image_url;
+  image.alt = story.caption ? `Story photo: ${story.caption}` : `Story photo shared by ${story.author}`;
+  document.querySelector('#storyViewerAvatar').textContent = story.author.slice(0, 1).toUpperCase();
+  document.querySelector('#storyViewerAuthor').textContent = `${story.author} · ${story.handle}`;
+  const hoursLeft = Math.max(1, Math.ceil((Date.parse(story.expires_at) - Date.now()) / 3600000));
+  document.querySelector('#storyViewerTime').textContent = `${storyTime(story)} · ${hoursLeft}h left`;
+  document.querySelector('#storyViewerCaption').textContent = story.caption;
+  document.querySelector('#storyViewerCaption').hidden = !story.caption;
+  document.querySelector('#storyViewerError').hidden = true;
+  document.querySelector('#deleteStory').hidden = !story.can_delete;
+  document.querySelector('#storyViewerProgress').innerHTML = activeStoryGroup.map((_, index) => `<span class="${index <= activeStoryIndex ? 'is-read' : ''}"></span>`).join('');
+  document.querySelector('#previousStory').disabled = activeStoryIndex === 0;
+  document.querySelector('#nextStory').disabled = activeStoryIndex === activeStoryGroup.length - 1;
+}
+
+function openStoryGroup(group) {
+  if (!group?.length) return;
+  activeStoryGroup = group;
+  activeStoryIndex = 0;
+  renderStoryViewer();
+  document.querySelector('#storyViewer').showModal();
+}
+
+async function loadServerStories() {
+  try {
+    const response = await apiRequest(window.MEEBLE_API.stories);
+    serverStories = response.results;
+    renderStories();
+  } catch (error) {
+    showToast(error.message || 'Stories could not be loaded just now.');
+  }
 }
 
 function renderPeople() {
@@ -377,9 +447,94 @@ composer.addEventListener('close', () => {
 });
 document.querySelector('#addPhoto').addEventListener('click', () => showToast('Photo sharing is coming soon. Your demo feed is ready for your words ♡'));
 document.querySelector('#toastClose').addEventListener('click', () => document.querySelector('#toastDialog').close());
+const storyComposer = document.querySelector('#storyComposer');
+const storyForm = document.querySelector('#storyForm');
+function openStoryComposer() {
+  if (!authenticated) {
+    showToast('Sign in to share a story that stays in your local Meeble space ♡');
+    return;
+  }
+  document.querySelector('#storyFormError').hidden = true;
+  storyComposer.showModal();
+}
 document.querySelector('#storiesRow').addEventListener('click', (event) => {
-  const story = event.target.closest('[data-story]');
-  if (story) showToast(story.dataset.story === 'Your story' ? 'Story sharing is coming soon — your little moments will live here.' : `${story.dataset.story}’s story is part of the sample feed. More moments coming soon ♡`);
+  const add = event.target.closest('[data-story-add]');
+  if (add) { openStoryComposer(); return; }
+  const own = event.target.closest('[data-story-own]');
+  if (own) {
+    const group = storyGroups.find((items) => items[0].can_delete);
+    if (group) openStoryGroup(group);
+    else openStoryComposer();
+    return;
+  }
+  const authorTile = event.target.closest('[data-story-author]');
+  if (authorTile) {
+    const group = storyGroups.find((items) => String(items[0].author_id) === authorTile.dataset.storyAuthor);
+    openStoryGroup(group);
+    return;
+  }
+  const sample = event.target.closest('[data-sample-story]');
+  if (sample) showToast(`${sample.dataset.sampleStory}’s story is a preview from the sample feed ♡`);
+});
+document.querySelector('#viewAllStories').addEventListener('click', () => {
+  if (storyGroups.length) openStoryGroup(storyGroups[0]);
+  else showToast('You’re all caught up on little moments ♡');
+});
+document.querySelector('#closeStoryComposer').addEventListener('click', () => storyComposer.close());
+storyComposer.addEventListener('close', () => { storyForm.reset(); document.querySelector('#storyFormError').hidden = true; });
+storyForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const submit = storyForm.querySelector('[type="submit"]');
+  const errorNode = document.querySelector('#storyFormError');
+  const file = document.querySelector('#storyImage').files[0];
+  if (!file) return;
+  submit.disabled = true;
+  submit.textContent = 'Sharing your moment…';
+  errorNode.hidden = true;
+  try {
+    const headers = { Accept: 'application/json', 'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content };
+    const response = await fetch(window.MEEBLE_API.createStory, { method: 'POST', credentials: 'same-origin', headers, body: new FormData(storyForm) });
+    let payload = {};
+    try { payload = await response.json(); } catch (error) { /* The message below covers non-JSON errors. */ }
+    if (!response.ok) throw new Error(payload.error || 'Your story could not be shared. Check the photo and try again.');
+    serverStories = [payload, ...serverStories.filter((item) => item.id !== payload.id)];
+    renderStories();
+    storyComposer.close();
+  } catch (error) {
+    errorNode.textContent = error.message || 'Your story could not be shared. Try again.';
+    errorNode.hidden = false;
+  } finally {
+    submit.disabled = false;
+    submit.innerHTML = 'Share your story <svg class="icon"><use href="#i-arrow"/></svg>';
+  }
+});
+const storyViewer = document.querySelector('#storyViewer');
+document.querySelector('#closeStoryViewer').addEventListener('click', () => storyViewer.close());
+storyViewer.addEventListener('close', () => { document.querySelector('#storyViewerImage').src = ''; });
+storyViewer.addEventListener('keydown', (event) => {
+  if (event.key === 'ArrowLeft' && activeStoryIndex > 0) { event.preventDefault(); document.querySelector('#previousStory').click(); }
+  if (event.key === 'ArrowRight' && activeStoryIndex < activeStoryGroup.length - 1) { event.preventDefault(); document.querySelector('#nextStory').click(); }
+});
+document.querySelector('#storyViewerImage').addEventListener('error', () => { document.querySelector('#storyViewerError').hidden = false; });
+document.querySelector('#previousStory').addEventListener('click', () => { if (activeStoryIndex > 0) { activeStoryIndex -= 1; renderStoryViewer(); } });
+document.querySelector('#nextStory').addEventListener('click', () => { if (activeStoryIndex < activeStoryGroup.length - 1) { activeStoryIndex += 1; renderStoryViewer(); } });
+document.querySelector('#deleteStory').addEventListener('click', async () => {
+  const story = activeStoryGroup[activeStoryIndex];
+  if (!story?.can_delete) return;
+  try {
+    await apiRequest(`${window.MEEBLE_API.stories}${story.id}/delete/`, { method: 'POST', data: {} });
+    serverStories = serverStories.filter((item) => item.id !== story.id);
+    renderStories();
+    activeStoryGroup = activeStoryGroup.filter((item) => item.id !== story.id);
+    if (!activeStoryGroup.length) storyViewer.close();
+    else { activeStoryIndex = Math.min(activeStoryIndex, activeStoryGroup.length - 1); renderStoryViewer(); }
+  } catch (error) { showToast(error.message || 'That story could not be deleted.'); }
+});
+document.querySelector('#storyViewerCard').addEventListener('click', (event) => {
+  if (event.target.closest('button')) return;
+  const bounds = event.currentTarget.getBoundingClientRect();
+  if (event.clientX < bounds.left + bounds.width * 0.35 && activeStoryIndex > 0) document.querySelector('#previousStory').click();
+  else if (event.clientX > bounds.left + bounds.width * 0.65 && activeStoryIndex < activeStoryGroup.length - 1) document.querySelector('#nextStory').click();
 });
 document.querySelectorAll('[data-page]').forEach((button) => button.addEventListener('click', () => {
   const page = button.dataset.page;
@@ -392,7 +547,6 @@ document.querySelectorAll('[data-page]').forEach((button) => button.addEventList
   if (page === 'home') return;
   showToast(page === 'profile' ? 'Your profile is being made extra you. Coming soon ♡' : `${page[0].toUpperCase() + page.slice(1)} is coming soon. This is just the beginning ♡`);
 }));
-document.querySelector('#viewAllStories').addEventListener('click', () => showToast('You’re all caught up on little moments ♡'));
 document.querySelectorAll('[data-feed-filter]').forEach((filter) => filter.addEventListener('click', () => {
   const value = filter.dataset.feedFilter;
   if (!authenticated && value === 'following') {
@@ -457,4 +611,5 @@ document.querySelector('#peopleList').addEventListener('click', async (event) =>
 });
 
 render();
-if (authenticated) loadServerFeed();
+renderStories();
+if (authenticated) { loadServerFeed(); loadServerStories(); }

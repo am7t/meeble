@@ -1,8 +1,20 @@
+from datetime import timedelta
+from uuid import uuid4
+
 from django.conf import settings
 from django.db import models
 from django.db.models import F, Q
 from django.db.models.functions import Length
 from django.db.models.lookups import GreaterThanOrEqual, LessThanOrEqual
+from django.utils import timezone
+
+
+def story_image_upload_to(instance, filename):
+    return f"stories/{uuid4().hex}.jpg"
+
+
+def default_story_expiration():
+    return timezone.now() + timedelta(hours=24)
 
 
 class Follow(models.Model):
@@ -99,3 +111,41 @@ class Reaction(models.Model):
             ),
         ]
         indexes = [models.Index(fields=["post", "created_at"], name="reaction_post_created_idx")]
+
+
+class Story(models.Model):
+    class Visibility(models.TextChoices):
+        PUBLIC = "public", "Public"
+        FOLLOWERS = "followers", "Followers"
+        PRIVATE = "private", "Only me"
+
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="stories"
+    )
+    image = models.ImageField(upload_to=story_image_upload_to)
+    caption = models.CharField(max_length=160, blank=True)
+    visibility = models.CharField(
+        max_length=12, choices=Visibility.choices, default=Visibility.PUBLIC
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(default=default_story_expiration)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(visibility__in=["public", "followers", "private"]),
+                name="story_visibility_valid",
+            ),
+            models.CheckConstraint(
+                condition=Q(expires_at__gt=models.F("created_at")),
+                name="story_expires_after_create",
+            ),
+            models.CheckConstraint(
+                condition=Q(caption="") | LessThanOrEqual(Length("caption"), 160),
+                name="story_caption_length_valid",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["expires_at", "created_at"], name="story_expiry_created_idx"),
+            models.Index(fields=["author", "expires_at"], name="story_author_expiry_idx"),
+        ]

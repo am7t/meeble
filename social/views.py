@@ -1,18 +1,108 @@
-from django.core.paginator import Paginator
+import warnings
+from datetime import timedelta
+from io import BytesIO
+
+from PIL import Image, ImageOps, UnidentifiedImageError
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
+from django.core.files.base import ContentFile
+from django.core.paginator import Paginator
 from django.db import IntegrityError, transaction
 from django.db.models import Count, Exists, OuterRef, Q
-from django.http import HttpResponse, JsonResponse
+from django.http import FileResponse, Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
+from django.urls import reverse
+from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
-from .models import Comment, Follow, Post, Reaction
+from .models import Comment, Follow, Post, Reaction, Story
 
 PAGE_SIZE = 20
 MAX_COMMENT_LENGTH = 500
+MAX_STORY_CAPTION_LENGTH = 160
+MAX_STORY_IMAGE_BYTES = 8 * 1024 * 1024
+MAX_STORY_PIXELS = 20_000_000
+MAX_STORY_EDGE = 2400
+STORY_LIFETIME = timedelta(hours=24)
+STORY_IMAGE_FORMATS = ("JPEG", "PNG", "WEBP")
 
 
 def _authentication_error():
     return JsonResponse({"error": "Sign in to use your local feed."}, status=401)
+
+
+def _sanitize_story_image(upload):
+    if upload.size > MAX_STORY_IMAGE_BYTES:
+        raise ValidationError("Choose an image under 8 MB.")
+    try:
+        upload.seek(0)
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", Image.DecompressionBombWarning)
+            with Image.open(upload, formats=STORY_IMAGE_FORMATS) as source:
+                if source.width * source.height > MAX_STORY_PIXELS:
+                    raise ValidationError("Choose an image with 20 megapixels or fewer.")
+                if getattr(source, "n_frames", 1) != 1:
+                    raise ValidationError("Animated images are not supported for stories yet.")
+                source.verify()
+
+        upload.seek(0)
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", Image.DecompressionBombWarning)
+            with Image.open(upload, formats=STORY_IMAGE_FORMATS) as source:
+                source.load()
+                image = ImageOps.exif_transpose(source)
+                if image.mode in {"RGBA", "LA"} or "transparency" in image.info:
+                    transparent = image.convert("RGBA")
+                    flattened = Image.new("RGB", transparent.size, "white")
+                    flattened.paste(transparent, mask=transparent.getchannel("A"))
+                    image = flattened
+                else:
+                    image = image.convert("RGB")
+                image.thumbnail((MAX_STORY_EDGE, MAX_STORY_EDGE), Image.Resampling.LANCZOS)
+                output = BytesIO()
+                image.save(output, "JPEG", quality=88, optimize=True, exif=b"", icc_profile=None)
+        return ContentFile(output.getvalue(), name="story.jpg")
+    except ValidationError:
+        raise
+    except (
+        Image.DecompressionBombError,
+        Image.DecompressionBombWarning,
+        OSError,
+        UnidentifiedImageError,
+        ValueError,
+    ) as error:
+        raise ValidationError("Choose a readable JPEG, PNG, or WebP image.") from error
+
+
+def _visible_stories(user):
+    return (
+        Story.objects.select_related("author__profile")
+        .filter(expires_at__gt=timezone.now(), author__is_active=True)
+        .filter(
+            Q(author=user)
+            | Q(visibility=Story.Visibility.PUBLIC)
+            | Q(
+                visibility=Story.Visibility.FOLLOWERS,
+                author__followers__follower=user,
+            )
+        )
+        .distinct()
+        .order_by("-created_at", "-pk")
+    )
+
+
+def _serialize_story(story, user):
+    return {
+        "id": story.pk,
+        "author_id": story.author_id,
+        "author": story.author.profile.display_name,
+        "handle": f"@{story.author.profile.handle}",
+        "caption": story.caption,
+        "created_at": story.created_at.isoformat(),
+        "expires_at": story.expires_at.isoformat(),
+        "visibility": story.visibility,
+        "image_url": reverse("social:story-image", args=[story.pk]),
+        "can_delete": story.author_id == user.pk,
+    }
 
 
 def _visible_post(user, post_id):
@@ -266,3 +356,85 @@ def edit_post(request, post_id):
     post.save(update_fields=["body", "updated_at"])
     post = _annotated_posts(request.user).get(pk=post.pk)
     return JsonResponse(_serialize_post(post, request.user))
+
+
+@require_GET
+def stories(request):
+    if not request.user.is_authenticated:
+        return _authentication_error()
+    try:
+        page_number = int(request.GET.get("page", "1"))
+    except ValueError:
+        return JsonResponse({"error": "Page must be a positive number."}, status=400)
+    if page_number < 1:
+        return JsonResponse({"error": "Page must be a positive number."}, status=400)
+
+    page = Paginator(_visible_stories(request.user), PAGE_SIZE).get_page(page_number)
+    return JsonResponse(
+        {
+            "results": [_serialize_story(story, request.user) for story in page.object_list],
+            "next_page": page.next_page_number() if page.has_next() else None,
+        }
+    )
+
+
+@require_POST
+def create_story(request):
+    if not request.user.is_authenticated:
+        return _authentication_error()
+    upload = request.FILES.get("image")
+    if upload is None:
+        return JsonResponse({"error": "Choose a photo for your story."}, status=400)
+    caption = request.POST.get("caption", "").strip()
+    if len(caption) > MAX_STORY_CAPTION_LENGTH:
+        return JsonResponse(
+            {"error": f"Keep your story caption under {MAX_STORY_CAPTION_LENGTH} characters."},
+            status=400,
+        )
+    visibility = request.POST.get("visibility", Story.Visibility.PUBLIC)
+    if visibility not in Story.Visibility.values:
+        return JsonResponse({"error": "Choose a supported story audience."}, status=400)
+    try:
+        image = _sanitize_story_image(upload)
+    except ValidationError as error:
+        return JsonResponse({"error": error.messages[0]}, status=400)
+
+    story = Story(
+        author=request.user,
+        caption=caption,
+        visibility=visibility,
+        expires_at=timezone.now() + STORY_LIFETIME,
+    )
+    story.image.save("story.jpg", image, save=False)
+    try:
+        with transaction.atomic():
+            story.save()
+    except Exception:
+        story.image.delete(save=False)
+        raise
+    return JsonResponse(_serialize_story(story, request.user), status=201)
+
+
+@require_GET
+def story_image(request, story_id):
+    if not request.user.is_authenticated:
+        return _authentication_error()
+    story = get_object_or_404(_visible_stories(request.user), pk=story_id)
+    try:
+        image_file = story.image.open("rb")
+    except OSError as error:
+        raise Http404("Story image is unavailable.") from error
+    response = FileResponse(image_file, content_type="image/jpeg")
+    response["Cache-Control"] = "private, no-store"
+    response["X-Content-Type-Options"] = "nosniff"
+    response["Cross-Origin-Resource-Policy"] = "same-origin"
+    return response
+
+
+@require_POST
+def delete_story(request, story_id):
+    if not request.user.is_authenticated:
+        return _authentication_error()
+    story = get_object_or_404(Story, pk=story_id, author=request.user)
+    story.delete()
+    return HttpResponse(status=204)

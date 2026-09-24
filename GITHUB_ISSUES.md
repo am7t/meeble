@@ -42,9 +42,9 @@ This is the implementation backlog for Meeble in reviewable slices. Issues are t
    - SQLite-backed comments, reactions, follow/unfollow actions, and the Following filter are in place.
    - Feed and follow endpoints enforce session, visibility, and self-follow boundaries with integration tests.
    - Public profile pages exclude private posts from other viewers and never expose account email addresses.
-10. **Add stories and expiration**
+10. **[Done] Add stories and expiration**
     - Support story creation, viewing, deletion, visibility checks, and expiration.
-    - Ensure expired stories are excluded from normal API access.
+    - Ensure expired stories are excluded from normal API access and provide a command to remove expired records and private media.
 11. **Add short-video feed foundations**
     - Add validated media metadata, paginated delivery, playback controls, and basic engagement.
 

@@ -12,6 +12,8 @@
 - Added owner-only post editing with validation and an edit menu; connected feed actions to look up database-backed posts correctly and load additional pages.
 - Added an authenticated public-profile directory, follow/unfollow actions, and a server-filtered Following feed.
 - Added public profile pages with viewer-specific post visibility, follow counts, and profile links from account-backed feed posts.
+- Added expiring, visibility-scoped photo stories with sanitized private storage, authenticated image delivery, owner-only deletion, and an explicit expired-media cleanup command.
+- Connected the story row, upload composer, and viewer to the local stories API with responsive visual treatment and accessible controls.
 - Added the incremental implementation backlog in `GITHUB_ISSUES.md`.
 
 

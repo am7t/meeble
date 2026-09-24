@@ -26,10 +26,11 @@ Then visit `http://127.0.0.1:8000`. The development server binds to this compute
 - Local email/password registration, sign-in, and sign-out use Django password hashing and database-backed sessions.
 - Profiles are editable by their signed-in owner, with supported color and layout choices saved in SQLite.
 - Signed-in users' posts, reactions, comments, and follow relationships persist in SQLite with visibility and ownership checks.
+- Signed-in users can share 24-hour photo stories. Images are sanitized, stored outside static assets, and delivered only after server-side visibility checks; expired stories are removed with `python manage.py purge_expired_stories`.
 - A local people directory and Following feed filter show public profile details and posts from followed accounts.
 - Public profile pages show display name, handle, bio, follow counts, and posts the viewer is allowed to see.
-- SQLite has relational profile, post, comment, reaction, and follow tables. Media, stories, messaging, and Grail are still being built.
-- No real Google/Apple sign-in, email delivery, upload, messaging, marketplace, or remote service integration yet.
+- SQLite has relational profile, post, comment, reaction, follow, and story tables. General post photos, messaging, and Grail are still being built.
+- No real Google/Apple sign-in, email delivery, general post upload, messaging, marketplace, or remote service integration yet. Story visibility currently supports public, followers, and private audiences for signed-in local accounts.
 
 ## Development roadmap
 
