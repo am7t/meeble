@@ -72,9 +72,11 @@ function postTemplate(post) {
     ? `<img class="avatar" src="${window.MEEBLE_ASSETS}avatar-${avatar}.svg" alt="">`
     : `<span class="avatar avatar-initial" aria-hidden="true">${escapeHTML(post.author.slice(0, 1).toUpperCase())}</span>`;
   const commentCount = Number.isSafeInteger(post.commentCount) ? post.commentCount : post.comments.length;
-  const menuLabel = post.serverId && post.canDelete ? 'Delete post' : 'Post options';
+  const menuItems = post.serverId && post.canEdit
+    ? '<button type="button" data-action="edit">Edit post</button><button type="button" data-action="delete">Delete post</button>'
+    : '<button type="button" data-action="hide">Hide from this feed</button>';
   return `<article class="post-card" data-id="${escapeHTML(post.id)}">
-    <div class="post-top">${avatarMarkup}<div class="post-author"><strong>${escapeHTML(post.author)}</strong><small>${escapeHTML(post.handle)} <span>·</span> ${escapeHTML(post.time)}</small></div><button class="post-menu" aria-label="${menuLabel}" data-action="menu">···</button></div>
+    <div class="post-top">${avatarMarkup}<div class="post-author"><strong>${escapeHTML(post.author)}</strong><small>${escapeHTML(post.handle)} <span>·</span> ${escapeHTML(post.time)}${post.edited ? ' <span>·</span> edited' : ''}</small></div><div class="post-menu-wrap"><button class="post-menu" aria-label="Post options" aria-haspopup="true" aria-expanded="false" data-action="menu">···</button><div class="post-menu-popover" role="group" hidden>${menuItems}</div></div></div>
     <p class="post-caption"><strong>${escapeHTML(post.author.split(' ')[0])}</strong> ${caption}</p>
     ${media}
     <div class="post-actions"><button class="action-btn ${post.liked ? 'liked' : ''}" data-action="like" aria-label="${post.liked ? 'Unlike' : 'Like'} post" aria-pressed="${post.liked}"><svg class="icon"><use href="#i-heart"/></svg><span>${post.likes}</span></button><button class="action-btn" data-action="focus-comment" aria-label="Comment"><svg class="icon"><use href="#i-comment"/></svg><span>${commentCount || ''}</span></button><button class="action-btn" data-action="share" aria-label="Share post"><svg class="icon"><use href="#i-send"/></svg></button><span class="action-spacer"></span><button class="action-btn bookmark-btn ${state.saved.includes(post.id) ? 'saved' : ''}" data-action="bookmark" aria-label="${state.saved.includes(post.id) ? 'Remove saved post' : 'Save post'}" aria-pressed="${state.saved.includes(post.id)}"><svg class="icon"><use href="#i-bookmark"/></svg></button></div>
@@ -85,6 +87,10 @@ function postTemplate(post) {
 function render() {
   const visiblePosts = [...serverPosts, ...state.posts].filter((post) => !state.hidden.includes(post.id));
   feed.innerHTML = visiblePosts.map(postTemplate).join('') || '<div class="empty-feed"><span>♡</span><h3>Your feed is waiting for a little love.</h3><p>Create a post to get things started.</p></div>';
+}
+
+function findPost(id) {
+  return serverPosts.find((post) => post.id === id) || state.posts.find((post) => post.id === id);
 }
 
 const stories = [
@@ -154,7 +160,9 @@ function mapServerPost(post) {
     liked: post.liked,
     comments: post.comments.map((comment) => ({ name: comment.name, text: comment.text })),
     commentCount: post.comment_count,
-    canDelete: post.can_delete === true
+    canDelete: post.can_delete === true,
+    canEdit: post.can_edit === true,
+    edited: post.edited === true
   };
 }
 
@@ -164,8 +172,14 @@ async function loadServerFeed(page = 1) {
     const fetchedPosts = response.results.map(mapServerPost);
     serverPosts = page === 1 ? fetchedPosts : [...serverPosts, ...fetchedPosts];
     nextServerPage = response.next_page;
+    const loadMore = document.querySelector('#loadMore');
+    loadMore.disabled = false;
+    loadMore.textContent = nextServerPage ? 'A little more, please ♡' : 'That’s the good stuff for now ♡';
     render();
   } catch (error) {
+    const loadMore = document.querySelector('#loadMore');
+    loadMore.disabled = false;
+    loadMore.textContent = nextServerPage ? 'Try loading more again ♡' : 'That’s the good stuff for now ♡';
     showToast(error.message || 'Your saved posts could not be loaded. Try again in a moment.');
   }
 }
@@ -174,9 +188,32 @@ feed.addEventListener('click', async (event) => {
   const button = event.target.closest('[data-action]');
   if (!button) return;
   const card = button.closest('.post-card');
-  const post = state.posts.find((item) => item.id === card?.dataset.id);
+  const post = findPost(card?.dataset.id);
   if (!post) return;
-  if (button.dataset.action === 'like') {
+  if (button.dataset.action === 'menu') {
+    const menu = card.querySelector('.post-menu-popover');
+    const open = menu.hidden;
+    feed.querySelectorAll('.post-menu-popover').forEach((item) => { item.hidden = true; });
+    feed.querySelectorAll('.post-menu').forEach((item) => item.setAttribute('aria-expanded', 'false'));
+    menu.hidden = !open;
+    button.setAttribute('aria-expanded', String(open));
+  } else if (button.dataset.action === 'edit') {
+    document.querySelector('#postCaption').value = post.caption;
+    document.querySelector('#composer h2').textContent = 'Edit your moment';
+    document.querySelector('.publish-button').innerHTML = 'Save changes <svg class="icon"><use href="#i-arrow"/></svg>';
+    editingPostId = post.serverId;
+    composer.showModal();
+  } else if (button.dataset.action === 'delete' && post.serverId && post.canDelete) {
+    if (!confirm('Delete this post from your Meeble space? This also removes its comments and reactions.')) return;
+    try {
+      await apiRequest(`${window.MEEBLE_API.posts}${post.serverId}/delete/`, { method: 'POST', data: {} });
+      serverPosts = serverPosts.filter((item) => item.id !== post.id);
+      render();
+    } catch (error) { showToast(error.message); }
+  } else if (button.dataset.action === 'hide') {
+    const remove = confirm('Hide this post from your local demo feed?');
+    if (remove) { state.hidden.push(post.id); saveState(); render(); }
+  } else if (button.dataset.action === 'like') {
     if (post.serverId) {
       try {
         const result = await apiRequest(`${window.MEEBLE_API.posts}${post.serverId}/reactions/toggle/`, { method: 'POST', data: {} });
@@ -194,26 +231,13 @@ feed.addEventListener('click', async (event) => {
     state.saved = state.saved.includes(post.id) ? state.saved.filter((id) => id !== post.id) : [...state.saved, post.id];
     saveState(); render();
   } else if (button.dataset.action === 'share') showToast('Sharing a little moment with a friend is coming soon ♡');
-  else if (button.dataset.action === 'menu') {
-    if (post.serverId && post.canDelete) {
-      if (!confirm('Delete this post from your Meeble space? This also removes its comments and reactions.')) return;
-      try {
-        await apiRequest(`${window.MEEBLE_API.posts}${post.serverId}/delete/`, { method: 'POST', data: {} });
-        serverPosts = serverPosts.filter((item) => item.id !== post.id);
-        render();
-      } catch (error) { showToast(error.message); }
-    } else {
-      const remove = confirm('Hide this post from your local demo feed?');
-      if (remove) { state.hidden.push(post.id); saveState(); render(); }
-    }
-  }
 });
 
 feed.addEventListener('submit', async (event) => {
   if (!event.target.matches('.comment-form')) return;
   event.preventDefault();
   const card = event.target.closest('.post-card');
-  const post = state.posts.find((item) => item.id === card.dataset.id);
+  const post = findPost(card.dataset.id);
   const input = event.target.elements.comment;
   const text = input.value.trim();
   if (!post || !text) return;
@@ -230,7 +254,16 @@ feed.addEventListener('submit', async (event) => {
   }
 });
 
+document.querySelector('#loadMore').addEventListener('click', async (event) => {
+  if (!authenticated || !nextServerPage) return;
+  const button = event.currentTarget;
+  button.disabled = true;
+  button.textContent = 'Gathering a little more…';
+  await loadServerFeed(nextServerPage);
+});
+
 const composer = document.querySelector('#composer');
+let editingPostId = null;
 document.querySelector('#composer label').textContent = `What’s on your mind, ${currentDisplayName}?`;
 document.querySelector('#closeComposer').addEventListener('click', () => composer.close());
 document.querySelector('#openComposer').addEventListener('click', () => {
@@ -249,14 +282,29 @@ document.querySelector('#postForm').addEventListener('submit', async (event) => 
     return;
   }
   try {
-    const result = await apiRequest(window.MEEBLE_API.posts, { method: 'POST', data: { body: caption } });
-    serverPosts.unshift(mapServerPost(result));
+    if (editingPostId) {
+      const result = await apiRequest(`${window.MEEBLE_API.posts}${editingPostId}/edit/`, { method: 'POST', data: { body: caption } });
+      const index = serverPosts.findIndex((post) => post.serverId === editingPostId);
+      if (index !== -1) serverPosts[index] = mapServerPost(result);
+    } else {
+      const result = await apiRequest(window.MEEBLE_API.posts, { method: 'POST', data: { body: caption } });
+      serverPosts.unshift(mapServerPost(result));
+    }
     render(); composer.close(); event.target.reset();
+    editingPostId = null;
+    document.querySelector('#composer h2').textContent = 'Share a moment';
+    document.querySelector('.publish-button').innerHTML = 'Share with your people <svg class="icon"><use href="#i-arrow"/></svg>';
   } catch (error) {
     showToast(error.message || 'Your post could not be saved. Try again.');
     return;
   }
   document.querySelector('#feed').scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+composer.addEventListener('close', () => {
+  editingPostId = null;
+  document.querySelector('#composer h2').textContent = 'Share a moment';
+  document.querySelector('#postCaption').value = '';
+  document.querySelector('.publish-button').innerHTML = 'Share with your people <svg class="icon"><use href="#i-arrow"/></svg>';
 });
 document.querySelector('#addPhoto').addEventListener('click', () => showToast('Photo sharing is coming soon. Your demo feed is ready for your words ♡'));
 document.querySelector('#toastClose').addEventListener('click', () => document.querySelector('#toastDialog').close());

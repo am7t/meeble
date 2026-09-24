@@ -9,6 +9,7 @@
 - Added SQLite profile, post, comment, reaction, and follow models with migrations, integrity constraints, indexes, and database-level regression tests.
 - Added a signed-in profile editor with server-validated handles and persisted theme/layout settings.
 - Added authenticated, paginated post APIs with SQLite-backed comments/reactions, visibility filtering, and owner-only deletion; connected signed-in feed actions to the local server.
+- Added owner-only post editing with validation and an edit menu; connected feed actions to look up database-backed posts correctly and load additional pages.
 - Added the incremental implementation backlog in `GITHUB_ISSUES.md`.
 
 

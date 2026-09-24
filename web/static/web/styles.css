@@ -99,7 +99,12 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .post-author strong { display: block; font-size: 12px; font-weight: 800; letter-spacing: -.12px; }
 .post-author small { display: block; margin-top: 3px; color: #999a90; font-size: 9px; }
 .post-author small span { padding: 0 2px; color: #c4bfb2; }
-.post-menu { margin-left: auto; padding: 4px 2px 4px 9px; border: 0; background: none; color: #918f84; font-size: 19px; line-height: 1; cursor: pointer; }
+.post-menu-wrap { position: relative; margin-left: auto; }
+.post-menu { padding: 4px 2px 4px 9px; border: 0; background: none; color: #918f84; font-size: 19px; line-height: 1; cursor: pointer; }
+.post-menu-popover { position: absolute; top: calc(100% + 4px); right: 0; z-index: 4; display: grid; min-width: 150px; padding: 5px; border: 1px solid rgba(255,255,255,.94); border-radius: 10px; background: rgba(255,255,250,.94); box-shadow: 0 8px 22px rgba(44,51,40,.16); backdrop-filter: blur(16px) saturate(1.35); }
+.post-menu-popover[hidden] { display: none; }
+.post-menu-popover button { padding: 9px 10px; border: 0; border-radius: 6px; background: transparent; color: var(--ink); text-align: left; font: 600 11px var(--sans); cursor: pointer; }
+.post-menu-popover button:hover, .post-menu-popover button:focus-visible { background: #eff1e7; outline: none; }
 .post-caption { margin: 0; padding: 4px 17px 12px; color: #596057; font-size: 12px; line-height: 1.6; }
 .post-caption strong { margin-right: 4px; color: #414940; font-weight: 800; }
 .hashtag { color: #6d8666; }

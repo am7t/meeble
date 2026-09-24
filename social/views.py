@@ -69,6 +69,8 @@ def _serialize_post(post, user):
         "comments": [_serialize_comment(comment) for comment in reversed(list(comments))],
         "comment_count": comment_count,
         "can_delete": post.author_id == user.pk,
+        "can_edit": post.author_id == user.pk,
+        "edited": post.updated_at > post.created_at,
     }
 
 
@@ -171,3 +173,18 @@ def delete_post(request, post_id):
     post = get_object_or_404(Post, pk=post_id, author=request.user)
     post.delete()
     return HttpResponse(status=204)
+
+
+@require_POST
+def edit_post(request, post_id):
+    if not request.user.is_authenticated:
+        return _authentication_error()
+    post = get_object_or_404(Post, pk=post_id, author=request.user)
+    body = request.POST.get("body", "").strip()
+    if not body or len(body) > 500:
+        return JsonResponse({"error": "Write a post between 1 and 500 characters."}, status=400)
+
+    post.body = body
+    post.save(update_fields=["body", "updated_at"])
+    post = _annotated_posts(request.user).get(pk=post.pk)
+    return JsonResponse(_serialize_post(post, request.user))

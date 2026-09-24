@@ -26,7 +26,7 @@ Then visit `http://127.0.0.1:8000`. The development server binds to this compute
 - Local email/password registration, sign-in, and sign-out use Django password hashing and database-backed sessions.
 - Profiles are editable by their signed-in owner, with supported color and layout choices saved in SQLite.
 - Signed-in users' posts, reactions, and comments persist in SQLite and follow post visibility and ownership checks.
-- SQLite has relational profile, post, comment, reaction, and follow tables. Media, post editing, stories, messaging, and Grail are still being built.
+- SQLite has relational profile, post, comment, reaction, and follow tables. Media, follow flows, stories, messaging, and Grail are still being built.
 - No real Google/Apple sign-in, email delivery, upload, messaging, marketplace, or remote service integration yet.
 
 ## Development roadmap

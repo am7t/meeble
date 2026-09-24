@@ -199,6 +199,41 @@ class FeedAPITests(TestCase):
         self.assertEqual(deleted.status_code, 204)
         self.assertFalse(Post.objects.filter(pk=post.pk).exists())
 
+    def test_only_the_post_owner_can_edit_and_the_body_is_normalized(self):
+        post = Post.objects.create(author=self.amelia, body="Original moment")
+        edit_url = reverse("social:edit-post", args=[post.pk])
+
+        self.client.force_login(self.jules)
+        denied = self.client.post(edit_url, {"body": "Try to take over"})
+        self.assertEqual(denied.status_code, 404)
+        post.refresh_from_db()
+        self.assertEqual(post.body, "Original moment")
+
+        self.client.force_login(self.amelia)
+        edited = self.client.post(edit_url, {"body": "  A better little moment  "})
+        self.assertEqual(edited.status_code, 200)
+        self.assertEqual(edited.json()["caption"], "A better little moment")
+        self.assertTrue(edited.json()["can_edit"])
+        self.assertTrue(edited.json()["edited"])
+        post.refresh_from_db()
+        self.assertEqual(post.body, "A better little moment")
+
+        for body in (" ", "x" * 501):
+            rejected = self.client.post(edit_url, {"body": body})
+            self.assertEqual(rejected.status_code, 400)
+        self.assertEqual(Post.objects.get(pk=post.pk).body, "A better little moment")
+
+    def test_edit_api_requires_authentication_and_csrf(self):
+        post = Post.objects.create(author=self.amelia, body="A small thought")
+        edit_url = reverse("social:edit-post", args=[post.pk])
+
+        self.assertEqual(self.client.post(edit_url, {"body": "Changed"}).status_code, 401)
+        client = Client(enforce_csrf_checks=True)
+        client.force_login(self.amelia)
+        self.assertEqual(client.post(edit_url, {"body": "Changed"}).status_code, 403)
+        post.refresh_from_db()
+        self.assertEqual(post.body, "A small thought")
+
     def test_feed_mutations_require_csrf(self):
         client = Client(enforce_csrf_checks=True)
         client.force_login(self.amelia)
