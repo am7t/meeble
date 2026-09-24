@@ -16,6 +16,10 @@ python manage.py runserver 127.0.0.1:8000
 
 Open `http://127.0.0.1:8000`. The SQLite file remains in the project directory and is ignored by Git. Interactions on fictional sample posts remain browser showcase data; signed-in posts, comments, reactions, follows, and stories use the local API and database. Story images live under the ignored `private-media/` directory and are never served as static files.
 
+## Password recovery
+
+The default email backend is Django's console backend so recovery works offline: request a reset on the sign-in page and copy the one-hour, one-use link printed in the terminal running `runserver`. To deliver email, configure `DJANGO_EMAIL_BACKEND` plus the required `DJANGO_EMAIL_HOST`, `DJANGO_EMAIL_PORT`, `DJANGO_EMAIL_HOST_USER`, `DJANGO_EMAIL_HOST_PASSWORD`, `DJANGO_EMAIL_USE_TLS` or `DJANGO_EMAIL_USE_SSL`, and `DJANGO_DEFAULT_FROM_EMAIL` environment variables for the selected backend. Keep credentials out of Git and chat.
+
 ## Editing
 
 Keep modules readable and feature-focused. Use native dialogs and controls where practical, retain keyboard/focus support, and check narrow screens and reduced-motion behavior when changing the UI. Install `requirements-dev.txt` for Ruff. Run `ruff check .`, `ruff format --check .`, `node --check web/static/web/app.js`, `python manage.py check`, `python manage.py makemigrations --check --dry-run`, and `python manage.py test` before a change is ready.

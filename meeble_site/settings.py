@@ -68,6 +68,17 @@ STATIC_URL = "static/"
 PRIVATE_MEDIA_ROOT = BASE_DIR / "private-media"
 MEDIA_ROOT = PRIVATE_MEDIA_ROOT
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+EMAIL_BACKEND = os.environ.get(
+    "DJANGO_EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend"
+)
+EMAIL_HOST = os.environ.get("DJANGO_EMAIL_HOST", "")
+EMAIL_PORT = int(os.environ.get("DJANGO_EMAIL_PORT", "25"))
+EMAIL_HOST_USER = os.environ.get("DJANGO_EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("DJANGO_EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_TLS = os.environ.get("DJANGO_EMAIL_USE_TLS", "").lower() == "true"
+EMAIL_USE_SSL = os.environ.get("DJANGO_EMAIL_USE_SSL", "").lower() == "true"
+DEFAULT_FROM_EMAIL = os.environ.get("DJANGO_DEFAULT_FROM_EMAIL", "Meeble local <noreply@localhost>")
+PASSWORD_RESET_TIMEOUT = 3600
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = "Lax"
 CSRF_COOKIE_SAMESITE = "Lax"

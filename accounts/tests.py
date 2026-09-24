@@ -1,4 +1,5 @@
 from django.contrib.auth import authenticate
+from django.core import mail
 from django.urls import reverse
 from django.test import Client, TestCase
 from .models import User
@@ -92,6 +93,62 @@ class UserModelTests(TestCase):
 
         self.assertEqual(response.status_code, 403)
         self.assertFalse(User.objects.filter(email="amelia@example.com").exists())
+
+    def test_password_reset_uses_one_time_local_email_link_without_account_enumeration(self):
+        user = User.objects.create_user("amelia@example.com", "CiderMoon!56Little")
+        reset_url = reverse("accounts:password_reset")
+        self.assertContains(self.client.get(reset_url), "Forgot your password?")
+        with self.settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend"):
+            known = self.client.post(reset_url, {"email": user.email})
+            unknown = self.client.post(reset_url, {"email": "nobody@example.com"})
+
+        self.assertRedirects(known, reverse("accounts:password_reset_done"))
+        self.assertRedirects(unknown, reverse("accounts:password_reset_done"))
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn("one-time link", mail.outbox[0].body)
+        self.assertIn("http://testserver/accounts/password-reset/", mail.outbox[0].body)
+        self.assertIn("within one hour", mail.outbox[0].body)
+
+    def test_password_reset_changes_password_and_invalidates_the_link(self):
+        user = User.objects.create_user("amelia@example.com", "CiderMoon!56Little")
+        with self.settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend"):
+            self.client.post(reverse("accounts:password_reset"), {"email": user.email})
+
+        link = next(
+            line.strip()
+            for line in mail.outbox[0].body.splitlines()
+            if line.startswith("http://testserver/")
+        )
+        link_path = link.removeprefix("http://testserver")
+        response = self.client.get(link_path)
+        self.assertEqual(response.status_code, 302)
+        confirm_path = response.url
+        self.assertContains(self.client.get(confirm_path), "Choose a new password.")
+
+        changed = self.client.post(
+            confirm_path,
+            {"new_password1": "NewCiderMoon!62Set", "new_password2": "NewCiderMoon!62Set"},
+        )
+
+        self.assertRedirects(changed, reverse("accounts:password_reset_complete"))
+        user.refresh_from_db()
+        self.assertTrue(user.check_password("NewCiderMoon!62Set"))
+        self.assertFalse(user.check_password("CiderMoon!56Little"))
+        self.assertContains(self.client.get(link_path), "That link has expired.")
+        self.assertEqual(
+            self.client.post(
+                reverse("accounts:login"),
+                {"username": user.email, "password": "NewCiderMoon!62Set"},
+            ).status_code,
+            302,
+        )
+
+    def test_password_reset_requires_csrf(self):
+        client = Client(enforce_csrf_checks=True)
+
+        response = client.post(reverse("accounts:password_reset"), {"email": "test@example.com"})
+
+        self.assertEqual(response.status_code, 403)
 
 
 class ProfileEditViewTests(TestCase):
