@@ -4,15 +4,15 @@ This is the initial backlog for building Meeble in reviewable slices. Issues sho
 
 ## Foundation
 
-1. **Replace the static file server with a local application server**
+1. **[Done] Replace the static file server with a local application server**
    - Serve the existing showcase UI and JSON endpoints from one local origin.
    - Keep the application runnable on a developer machine without cloud accounts.
    - Document install, run, backup, and reset behavior.
-2. **Add a SQLite schema and migration workflow**
-   - Establish normalized accounts, sessions, profiles, posts, comments, reactions, and follows.
+2. **[In progress] Add a SQLite schema and migration workflow**
+   - Establish normalized accounts, sessions, profiles, posts, comments, reactions, and follows. The custom account model and initial migration are in place.
    - Enable foreign keys and add constraints and indexes where needed.
    - Keep the database file outside tracked source files.
-3. **Add continuous integration for the local app**
+3. **[Done] Add continuous integration for the local app**
    - Run formatting, linting, type checks where applicable, unit and integration tests, and a build/smoke check.
    - Pin or constrain tool versions and document local equivalents.
 
@@ -76,4 +76,4 @@ This is the initial backlog for building Meeble in reviewable slices. Issues sho
 
 ## GitHub setup
 
-The project currently has local Git history but no configured remote. The GitHub connector is available, while the saved `gh` CLI login is invalid. Select or create the intended Meeble repository before opening these issues or pushing commits.
+The project currently has local Git history but no configured remote. The user selected a public code repository. The connected GitHub account is `am7t`; the saved `gh` CLI login is invalid. Create the `am7t/meeble` repository, add it as `origin`, and publish the scoped commit history before opening this backlog as issues.

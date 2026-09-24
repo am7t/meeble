@@ -1,9 +1,10 @@
 # Changelog
 
-## Planned
+## 2026-09-24
 
-- Introduce a self-hosted Django + SQLite foundation while retaining the current showcase UI.
-- Track the incremental implementation backlog in `GITHUB_ISSUES.md`.
+- Introduced a self-hosted Django + SQLite foundation and kept the showcase UI.
+- Added the email-based custom user model, initial migration, health endpoint, focused tests, and CI workflow.
+- Added the incremental implementation backlog in `GITHUB_ISSUES.md`.
 
 
 ## Unreleased

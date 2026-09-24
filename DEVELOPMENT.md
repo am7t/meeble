@@ -2,20 +2,24 @@
 
 ## Prerequisites
 
-A modern browser is sufficient. Python 3 is optional if you prefer serving the files locally instead of opening `index.html` directly.
+Python 3.10 or newer and a modern browser. The first dependency install needs internet access; after installation, the app itself makes no required external requests.
 
 ## Run
 
 ```sh
-python3 -m http.server 8000
+python3 -m venv .venv
+. .venv/bin/activate
+python -m pip install -r requirements.txt
+python manage.py migrate
+python manage.py runserver 127.0.0.1:8000
 ```
 
-Open `http://localhost:8000`. The app makes no required network requests and uses system font fallbacks. Browser storage is scoped to the origin; clearing that site’s storage resets the sample.
+Open `http://127.0.0.1:8000`. The SQLite file remains in the project directory and is ignored by Git. Current feed edits remain scoped to browser storage until the feed API milestone is implemented.
 
 ## Editing
 
-Keep this first slice readable and dependency-free. Use native dialogs and controls where practical, retain keyboard/focus support, and check narrow screens and reduced-motion behavior when changing the UI.
+Keep modules readable and feature-focused. Use native dialogs and controls where practical, retain keyboard/focus support, and check narrow screens and reduced-motion behavior when changing the UI. Run `python manage.py test` and `python manage.py check` after backend changes.
 
-## Planned local-app transition
+## Local app
 
-The agreed next milestone is a local Django server with SQLite. Keep a reproducible dependency manifest, put the SQLite file and private media outside tracked source, use committed migrations, and document an offline-friendly run flow after dependencies have been installed once. Do not add cloud credentials or publicly expose the development server by default.
+The local Django server and SQLite foundation are in place. Keep a reproducible dependency manifest, put the SQLite file and private media outside tracked source, use committed migrations, and preserve a local-only run command. Do not add cloud credentials or publicly expose the development server by default.

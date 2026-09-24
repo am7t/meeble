@@ -1,14 +1,14 @@
 # Architecture
 
-## Current prototype
+## Current local application foundation
 
-The first iteration is a static browser application: `index.html` owns semantic page structure, `styles.css` owns the visual system and responsive behavior, `app.js` renders seeded feed data and handles interactions, and `assets/` contains local SVG portraits and editorial illustrations. A small versioned `localStorage` record preserves showcase edits. There is no server, database, identity provider, payment provider, or remote media storage.
+Django serves the current UI from `web/templates/web/index.html` and its CSS, JavaScript, and local SVG assets from `web/static/web/`. Run it on `127.0.0.1` only. SQLite is configured in `meeble_site/settings.py`; `accounts.User` is the custom email-identified user model and has an initial tracked migration. Django owns session middleware and CSRF protection. The home feed itself remains fictional seed data in the browser and its likes, comments, posts, and hidden state still live in versioned `localStorage` while feed APIs are built.
 
-The seed gives a new browser a ready-made feed. The app only writes after a user action. Storage errors are handled with a readable message, and user-entered text is HTML-escaped before feed rendering.
+The UI writes only after a user action. Storage errors are handled with a readable message, and user-entered text is HTML-escaped before feed rendering. The local database file is excluded from Git.
 
-## Next foundation: a local SQLite application
+## Chosen application foundation
 
-The agreed direction is a self-hosted local app that runs on the user's own machine. It will keep the current HTML/CSS/JavaScript experience and put it behind a same-origin Django application with SQLite. Django is a good fit here because its authentication, password hashing, session, CSRF, ORM, migration, and test facilities cover foundational needs without a paid service. Use small Django apps/modules around cohesive features; do not introduce a separate frontend build stack until it solves a concrete need.
+The app is a self-hosted local app that runs on the user's own machine. It keeps the current HTML/CSS/JavaScript experience behind a same-origin Django application with SQLite. Django provides the authentication, password hashing, session, CSRF, ORM, migration, and test facilities without a paid service. Use small Django apps/modules around cohesive features; do not introduce a separate frontend build stack until it solves a concrete need.
 
 The database is a local file excluded from Git. Use normal relational tables for accounts, profiles, posts, comments, reactions, follows, messages, listings, and orders; reserve validated structured configuration for profile customization. Use migrations for every schema change. Keep media on local storage initially, outside public static assets, and gate private delivery in application views.
 

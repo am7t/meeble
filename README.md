@@ -4,23 +4,28 @@ Meeble is a warm, playful social-platform showcase prototype with an editorial v
 
 ## Run locally
 
-No package manager, database, account, or network service is required. Open `index.html` in a modern browser, or serve this directory with any static file server, for example:
+Python 3.10+ is required. The first install needs internet access to download Django; after that, the app itself makes no required external requests.
 
 ```sh
-python3 -m http.server 8000
+python3 -m venv .venv
+. .venv/bin/activate
+python -m pip install -r requirements.txt
+python manage.py migrate
+python manage.py runserver 127.0.0.1:8000
 ```
 
-Then visit `http://localhost:8000`. Feed edits are stored in browser `localStorage` under `meeble.showcase.v1` on that browser profile. Use the browser’s site storage controls to clear the demo and restore the original sample feed.
+Then visit `http://127.0.0.1:8000`. The development server binds to this computer only. The SQLite database is `db.sqlite3` and is excluded from Git. The current feed interactions still use browser `localStorage` while the SQLite-backed feature APIs are built incrementally.
 
 ## Current scope
 
-- Offline static app shell, bespoke art direction, and responsive feed experience.
+- Local Django app shell, SQLite database, bespoke art direction, and responsive feed experience.
 - Demo profiles, stories, posts, and community sidebar.
 - Locally persisted post creation, likes, comments, and hidden posts.
-- No backend, real authentication, upload, messaging, marketplace, or remote service integration yet.
+- Email/password account model and server-side session foundation are in place; registration UI and account flows are the next feature slice.
+- No real Google/Apple sign-in, email delivery, upload, messaging, marketplace, or remote service integration yet.
 
 ## Next development phase
 
-The next agreed step is to evolve this into a local Django application backed by SQLite while preserving the current UI and seeded feed. It will remain self-hosted on the user's own machine. See [ARCHITECTURE.md](ARCHITECTURE.md), [DECISIONS.md](DECISIONS.md), and [GITHUB_ISSUES.md](GITHUB_ISSUES.md) for the chosen direction and feature backlog. This does not make the app publicly hosted or add required cloud costs.
+The current development milestone is evolving the showcase into a local Django application backed by SQLite while preserving the current UI and seeded feed. It remains self-hosted on the user's own machine. See [ARCHITECTURE.md](ARCHITECTURE.md), [DECISIONS.md](DECISIONS.md), and [GITHUB_ISSUES.md](GITHUB_ISSUES.md) for the chosen direction and feature backlog. This does not make the app publicly hosted or add required cloud costs.
 
 See [REQUIREMENTS.md](REQUIREMENTS.md), [ARCHITECTURE.md](ARCHITECTURE.md), and [DEVELOPMENT.md](DEVELOPMENT.md) for the current slice and next steps.
