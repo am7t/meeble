@@ -9,7 +9,7 @@
   <meta name="csrf-token" content="{{ csrf_token }}">
   <title>Meeble — a little place for you</title>
   <link rel="icon" type="image/svg+xml" href="{% static 'web/assets/mascot.svg' %}">
-  <link rel="stylesheet" href="{% static 'web/styles.css' %}">
+  <link rel="stylesheet" href="{% static 'web/styles.css' %}?v=stories-20260924">
 </head>
 <body data-authenticated="{{ user.is_authenticated|yesno:'true,false' }}" data-user-id="{% if user.is_authenticated %}{{ user.pk }}{% endif %}" data-display-name="{% if user.is_authenticated %}{{ user.profile.display_name }}{% else %}Amelia Rose{% endif %}" data-handle="{% if user.is_authenticated %}@{{ user.profile.handle }}{% else %}@amelia.rose{% endif %}" data-profile-url-template="{% url 'public-profile' handle='__handle__' %}">
   <svg class="icon-defs" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
@@ -60,6 +60,6 @@
   <dialog id="peopleDialog" class="composer-dialog people-dialog" aria-labelledby="peopleTitle"><section><button class="dialog-close" id="closePeople" type="button" aria-label="Close people suggestions">×</button><div class="dialog-eyebrow">YOUR NEXT HELLO</div><h2 id="peopleTitle">Meet your people</h2><p class="people-intro">A few local Meeble accounts to get your circle started.</p><div id="peopleList" class="people-list" aria-live="polite"></div><button class="people-more" id="peopleMore" type="button" hidden>Show more people</button></section></dialog>
   <dialog id="toastDialog" class="toast-dialog"><p id="toastMessage"></p><button id="toastClose">Okay ♡</button></dialog>
   <script>window.MEEBLE_ASSETS = "{% static 'web/assets/' %}"; window.MEEBLE_API = { feed: "{% url 'social:feed' %}", posts: "{% url 'social:create-post' %}", people: "{% url 'social:people' %}", stories: "{% url 'social:stories' %}", createStory: "{% url 'social:create-story' %}" };</script>
-  <script src="{% static 'web/app.js' %}" defer></script>
+  <script src="{% static 'web/app.js' %}?v=stories-20260924" defer></script>
 </body>
 </html>

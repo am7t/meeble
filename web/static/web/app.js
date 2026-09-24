@@ -136,7 +136,7 @@ function buildStoryGroups() {
 function renderStories() {
   buildStoryGroups();
   const ownGroup = storyGroups.find((group) => group[0].can_delete);
-  const ownLabel = ownGroup?.[0]?.author || 'Your story';
+  const ownLabel = ownGroup?.[0]?.author || currentDisplayName;
   const ownAvatar = ownLabel ? `<span class="avatar avatar-initial" aria-hidden="true">${escapeHTML(ownLabel.slice(0, 1).toUpperCase())}</span>` : '';
   const ownTile = `<button class="story is-own ${ownGroup ? 'has-stories' : ''}" data-story-own aria-label="${ownGroup ? `View ${escapeHTML(ownLabel)}’s story or add a moment` : 'Add to your story'}"><span class="story-ring">${ownAvatar}<span class="story-add story-add-overlay" data-story-add aria-hidden="true">+</span></span><span class="story-name">${ownGroup ? 'Your story' : 'Add story'}</span></button>`;
   const serverTiles = storyGroups.filter((group) => !group[0].can_delete).map((group) => {
