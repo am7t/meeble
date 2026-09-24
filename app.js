@@ -40,7 +40,7 @@ let state = loadState();
 const feed = document.querySelector('#feed');
 
 const today = new Date();
-document.querySelector('#todayLabel').textContent = `YOUR ${new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).format(today).toUpperCase()}`;
+document.querySelector('#todayLabel').textContent = new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).format(today);
 const todayAtMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 let birthday = new Date(today.getFullYear(), 8, 26);
 if (birthday < todayAtMidnight) birthday = new Date(today.getFullYear() + 1, 8, 26);
@@ -62,10 +62,11 @@ function postTemplate(post) {
   const avatar = ['amelia', 'jules', 'lila', 'nina', 'maya'].includes(post.avatar) ? post.avatar : 'amelia';
   const artFile = { cafe: 'assets/post-cafe.svg', sunday: 'assets/post-sunday.svg', flowers: 'assets/post-flowers.svg' }[art];
   const caption = escapeHTML(post.caption).replace(/(^|\s)(#[\p{L}\p{N}_]+)/gu, '$1<span class="hashtag">$2</span>');
+  const media = artFile ? `<div class="post-art" role="img" aria-label="${escapeHTML(post.artLabel || `Illustration for ${post.author}'s post`)}"><img src="${artFile}" alt=""></div>` : '';
   return `<article class="post-card" data-id="${escapeHTML(post.id)}">
     <div class="post-top"><img class="avatar" src="assets/avatar-${avatar}.svg" alt=""><div class="post-author"><strong>${escapeHTML(post.author)}</strong><small>${escapeHTML(post.handle)} <span>·</span> ${escapeHTML(post.time)}</small></div><button class="post-menu" aria-label="Post options" data-action="menu">···</button></div>
     <p class="post-caption"><strong>${escapeHTML(post.author.split(' ')[0])}</strong> ${caption}</p>
-    <div class="post-art ${art}" role="img" aria-label="${escapeHTML(post.artLabel || `Illustration for ${post.author}'s post`)}">${artFile ? `<img src="${artFile}" alt="">` : `<div class="custom-art"><span class="custom-art-kicker">A NOTE FROM AMELIA</span><span class="custom-art-text">the little<br>things <em>matter.</em></span><span class="custom-art-flower">✳</span></div>`}</div>
+    ${media}
     <div class="post-actions"><button class="action-btn ${post.liked ? 'liked' : ''}" data-action="like" aria-label="${post.liked ? 'Unlike' : 'Like'} post" aria-pressed="${post.liked}"><svg class="icon"><use href="#i-heart"/></svg><span>${post.likes}</span></button><button class="action-btn" data-action="focus-comment" aria-label="Comment"><svg class="icon"><use href="#i-comment"/></svg><span>${post.comments.length || ''}</span></button><button class="action-btn" data-action="share" aria-label="Share post"><svg class="icon"><use href="#i-send"/></svg></button><span class="action-spacer"></span><button class="action-btn bookmark-btn ${state.saved.includes(post.id) ? 'saved' : ''}" data-action="bookmark" aria-label="${state.saved.includes(post.id) ? 'Remove saved post' : 'Save post'}" aria-pressed="${state.saved.includes(post.id)}"><svg class="icon"><use href="#i-bookmark"/></svg></button></div>
     <div class="comments-area">${post.comments.map((comment) => `<div class="comment"><strong>${escapeHTML(comment.name)}</strong>${escapeHTML(comment.text)}</div>`).join('')}<form class="comment-form"><input name="comment" maxlength="240" aria-label="Write a comment" placeholder="Leave a little love…" required><button type="submit">Post</button></form></div>
   </article>`;
@@ -147,6 +148,12 @@ document.querySelector('#storiesRow').addEventListener('click', (event) => {
 });
 document.querySelectorAll('[data-page]').forEach((button) => button.addEventListener('click', () => {
   const page = button.dataset.page;
+  document.querySelectorAll('.nav-item').forEach((item) => {
+    const selected = item === button;
+    item.classList.toggle('active', selected);
+    if (selected) item.setAttribute('aria-current', 'page');
+    else item.removeAttribute('aria-current');
+  });
   if (page === 'home') return;
   showToast(page === 'profile' ? 'Your profile is being made extra you. Coming soon ♡' : `${page[0].toUpperCase() + page.slice(1)} is coming soon. This is just the beginning ♡`);
 }));
