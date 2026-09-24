@@ -25,12 +25,13 @@ Then visit `http://127.0.0.1:8000`. The development server binds to this compute
 - Fictional sample feed and sample-post interactions persist in browser storage as showcase data.
 - Local email/password registration, sign-in, and sign-out use Django password hashing and database-backed sessions.
 - Profiles are editable by their signed-in owner, with supported color and layout choices saved in SQLite.
-- Signed-in users' posts, reactions, and comments persist in SQLite and follow post visibility and ownership checks.
-- SQLite has relational profile, post, comment, reaction, and follow tables. Media, follow flows, stories, messaging, and Grail are still being built.
+- Signed-in users' posts, reactions, comments, and follow relationships persist in SQLite with visibility and ownership checks.
+- A local people directory and Following feed filter show public profile details and posts from followed accounts.
+- SQLite has relational profile, post, comment, reaction, and follow tables. Media, public profile pages, stories, messaging, and Grail are still being built.
 - No real Google/Apple sign-in, email delivery, upload, messaging, marketplace, or remote service integration yet.
 
 ## Development roadmap
 
-The current development milestone is completing the account-backed feed and its remaining social features. The app remains self-hosted on the user's own machine. See [ARCHITECTURE.md](ARCHITECTURE.md), [DECISIONS.md](DECISIONS.md), and [GITHUB_ISSUES.md](GITHUB_ISSUES.md) for the chosen direction and feature backlog. This does not make the app publicly hosted or add required cloud costs.
+The current development milestone is extending the core social experience beyond the account-backed feed. The app remains self-hosted on the user's own machine. See [ARCHITECTURE.md](ARCHITECTURE.md), [DECISIONS.md](DECISIONS.md), and [GITHUB_ISSUES.md](GITHUB_ISSUES.md) for the chosen direction and feature backlog. This does not make the app publicly hosted or add required cloud costs.
 
 See [REQUIREMENTS.md](REQUIREMENTS.md), [ARCHITECTURE.md](ARCHITECTURE.md), and [DEVELOPMENT.md](DEVELOPMENT.md) for the current slice and next steps.

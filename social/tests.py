@@ -14,6 +14,8 @@ class SocialSchemaTests(TestCase):
         self.jules = User.objects.create_user("jules@example.com", "safe demo password")
         Profile.objects.filter(user=self.amelia).update(handle="amelia", display_name="Amelia Rose")
         Profile.objects.filter(user=self.jules).update(handle="jules", display_name="Jules Parker")
+        self.amelia.profile.refresh_from_db()
+        self.jules.profile.refresh_from_db()
         self.post = Post.objects.create(author=self.amelia, body="A small happy moment")
 
     def test_sqlite_enforces_foreign_keys(self):
@@ -72,6 +74,10 @@ class FeedAPITests(TestCase):
         User = get_user_model()
         self.amelia = User.objects.create_user("amelia@example.com", "safe demo password")
         self.jules = User.objects.create_user("jules@example.com", "safe demo password")
+        Profile.objects.filter(user=self.amelia).update(handle="amelia", display_name="Amelia Rose")
+        Profile.objects.filter(user=self.jules).update(handle="jules", display_name="Jules Parker")
+        self.amelia.profile.refresh_from_db()
+        self.jules.profile.refresh_from_db()
         self.feed_url = reverse("social:feed")
         self.create_url = reverse("social:create-post")
 
@@ -125,6 +131,61 @@ class FeedAPITests(TestCase):
         followed_ids = {item["server_id"] for item in followed_response.json()["results"]}
         self.assertIn(followers_post.pk, followed_ids)
         self.assertNotIn(private_post.pk, followed_ids)
+
+        own_post = Post.objects.create(author=self.amelia, body="My own note")
+        following_response = self.client.get(self.feed_url, {"filter": "following"})
+        following_ids = {item["server_id"] for item in following_response.json()["results"]}
+        self.assertIn(public_post.pk, following_ids)
+        self.assertIn(followers_post.pk, following_ids)
+        self.assertNotIn(private_post.pk, following_ids)
+        self.assertNotIn(own_post.pk, following_ids)
+        self.assertEqual(self.client.get(self.feed_url, {"filter": "unknown"}).status_code, 400)
+
+    def test_people_directory_returns_public_fields_and_excludes_current_user(self):
+        people_url = reverse("social:people")
+        self.assertEqual(self.client.get(people_url).status_code, 401)
+        self.client.force_login(self.amelia)
+
+        response = self.client.get(people_url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()["results"]), 1)
+        person = response.json()["results"][0]
+        self.assertEqual(person["id"], self.jules.pk)
+        self.assertEqual(person["name"], "Jules Parker")
+        self.assertEqual(person["handle"], "@jules")
+        self.assertFalse(person["following"])
+        self.assertEqual(person["follower_count"], 0)
+        self.assertNotIn("email", person)
+        self.assertEqual(response.json()["next_page"], None)
+
+    def test_follow_toggle_is_authenticated_and_cannot_target_self(self):
+        toggle_url = reverse("social:toggle-follow", args=[self.jules.pk])
+        self.assertEqual(self.client.post(toggle_url).status_code, 401)
+
+        self.client.force_login(self.amelia)
+        followed = self.client.post(toggle_url)
+        unfollowed = self.client.post(toggle_url)
+
+        self.assertEqual(followed.json(), {"following": True, "follower_count": 1})
+        self.assertEqual(unfollowed.json(), {"following": False, "follower_count": 0})
+        self.assertFalse(Follow.objects.exists())
+        self.assertEqual(
+            self.client.post(reverse("social:toggle-follow", args=[self.amelia.pk])).status_code,
+            404,
+        )
+        self.assertEqual(
+            self.client.post(reverse("social:toggle-follow", args=[99999])).status_code, 404
+        )
+
+    def test_follow_toggle_requires_csrf(self):
+        client = Client(enforce_csrf_checks=True)
+        client.force_login(self.amelia)
+
+        response = client.post(reverse("social:toggle-follow", args=[self.jules.pk]))
+
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(Follow.objects.exists())
 
     def test_feed_paginates_and_rejects_invalid_page_numbers(self):
         self.client.force_login(self.amelia)

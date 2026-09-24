@@ -43,6 +43,10 @@ const currentDisplayName = document.body.dataset.displayName || 'Amelia Rose';
 const currentHandle = document.body.dataset.handle || '@amelia.rose';
 let serverPosts = [];
 let nextServerPage = null;
+let activeFeedFilter = 'for-you';
+let feedRequestSequence = 0;
+let nextPeoplePage = null;
+let peopleRecords = [];
 
 const today = new Date();
 document.querySelector('#todayLabel').textContent = new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).format(today);
@@ -85,8 +89,12 @@ function postTemplate(post) {
 }
 
 function render() {
-  const visiblePosts = [...serverPosts, ...state.posts].filter((post) => !state.hidden.includes(post.id));
-  feed.innerHTML = visiblePosts.map(postTemplate).join('') || '<div class="empty-feed"><span>♡</span><h3>Your feed is waiting for a little love.</h3><p>Create a post to get things started.</p></div>';
+  const visiblePosts = (activeFeedFilter === 'following' ? serverPosts : [...serverPosts, ...state.posts])
+    .filter((post) => !state.hidden.includes(post.id));
+  const emptyState = activeFeedFilter === 'following'
+    ? '<div class="empty-feed"><span>♡</span><h3>Your circle is just getting started.</h3><p>Follow a few local Meeble accounts to see their posts here.</p><button type="button" data-action="discover">Meet your people</button></div>'
+    : '<div class="empty-feed"><span>♡</span><h3>Your feed is waiting for a little love.</h3><p>Create a post to get things started.</p></div>';
+  feed.innerHTML = visiblePosts.map(postTemplate).join('') || emptyState;
 }
 
 function findPost(id) {
@@ -132,6 +140,48 @@ async function apiRequest(path, { method = 'GET', data } = {}) {
   return payload;
 }
 
+function renderPeople() {
+  const list = document.querySelector('#peopleList');
+  if (!peopleRecords.length) {
+    list.innerHTML = '<p class="people-empty">No other local accounts yet. Your circle will grow as people join this Meeble database.</p>';
+  } else {
+    list.innerHTML = peopleRecords.map((person) => `<article class="person-result"><span class="avatar avatar-initial" aria-hidden="true">${escapeHTML(person.name.slice(0, 1).toUpperCase())}</span><span class="person-copy"><strong>${escapeHTML(person.name)}</strong><small>${escapeHTML(person.handle)} · ${person.follower_count} ${person.follower_count === 1 ? 'follower' : 'followers'}</small></span><button type="button" class="person-follow ${person.following ? 'is-following' : ''}" data-follow-id="${person.id}" aria-pressed="${person.following}">${person.following ? 'Following' : 'Follow'}</button></article>`).join('');
+  }
+  const more = document.querySelector('#peopleMore');
+  more.hidden = !nextPeoplePage;
+  more.disabled = false;
+}
+
+async function loadPeople(page = 1) {
+  const list = document.querySelector('#peopleList');
+  list.setAttribute('aria-busy', 'true');
+  if (page === 1) list.innerHTML = '<p class="people-empty">Finding a few local faces…</p>';
+  try {
+    const response = await apiRequest(`${window.MEEBLE_API.people}?page=${page}`);
+    peopleRecords = page === 1 ? response.results : [...peopleRecords, ...response.results];
+    nextPeoplePage = response.next_page;
+    renderPeople();
+  } catch (error) {
+    list.innerHTML = `<p class="people-empty">${escapeHTML(error.message || 'People could not be loaded. Try again.')}</p>`;
+  } finally {
+    list.setAttribute('aria-busy', 'false');
+    document.querySelector('#peopleMore').disabled = false;
+  }
+}
+
+async function openPeople(opener = document.querySelector('.find-friends')) {
+  if (!authenticated) {
+    showToast('Sign in to find and follow people in your local Meeble space ♡');
+    return;
+  }
+  peopleOpener = opener;
+  peopleRecords = [];
+  nextPeoplePage = null;
+  renderPeople();
+  document.querySelector('#peopleDialog').showModal();
+  await loadPeople();
+}
+
 function relativeTime(value) {
   const timestamp = new Date(value).getTime();
   if (!Number.isFinite(timestamp)) return 'a little while ago';
@@ -166,19 +216,24 @@ function mapServerPost(post) {
   };
 }
 
-async function loadServerFeed(page = 1) {
+async function loadServerFeed(page = 1, feedFilter = activeFeedFilter) {
+  const requestSequence = ++feedRequestSequence;
   try {
-    const response = await apiRequest(`${window.MEEBLE_API.feed}?page=${page}`);
+    const response = await apiRequest(`${window.MEEBLE_API.feed}?page=${page}&filter=${encodeURIComponent(feedFilter)}`);
+    if (requestSequence !== feedRequestSequence) return;
     const fetchedPosts = response.results.map(mapServerPost);
     serverPosts = page === 1 ? fetchedPosts : [...serverPosts, ...fetchedPosts];
     nextServerPage = response.next_page;
     const loadMore = document.querySelector('#loadMore');
     loadMore.disabled = false;
-    loadMore.textContent = nextServerPage ? 'A little more, please ♡' : 'That’s the good stuff for now ♡';
+    loadMore.hidden = !nextServerPage;
+    loadMore.textContent = 'A little more, please ♡';
     render();
   } catch (error) {
+    if (requestSequence !== feedRequestSequence) return;
     const loadMore = document.querySelector('#loadMore');
     loadMore.disabled = false;
+    loadMore.hidden = !nextServerPage;
     loadMore.textContent = nextServerPage ? 'Try loading more again ♡' : 'That’s the good stuff for now ♡';
     showToast(error.message || 'Your saved posts could not be loaded. Try again in a moment.');
   }
@@ -187,6 +242,10 @@ async function loadServerFeed(page = 1) {
 feed.addEventListener('click', async (event) => {
   const button = event.target.closest('[data-action]');
   if (!button) return;
+  if (button.dataset.action === 'discover') {
+    await openPeople(button);
+    return;
+  }
   const card = button.closest('.post-card');
   const post = findPost(card?.dataset.id);
   if (!post) return;
@@ -264,6 +323,8 @@ document.querySelector('#loadMore').addEventListener('click', async (event) => {
 
 const composer = document.querySelector('#composer');
 let editingPostId = null;
+const peopleDialog = document.querySelector('#peopleDialog');
+let peopleOpener = null;
 document.querySelector('#composer label').textContent = `What’s on your mind, ${currentDisplayName}?`;
 document.querySelector('#closeComposer').addEventListener('click', () => composer.close());
 document.querySelector('#openComposer').addEventListener('click', () => {
@@ -324,20 +385,67 @@ document.querySelectorAll('[data-page]').forEach((button) => button.addEventList
   showToast(page === 'profile' ? 'Your profile is being made extra you. Coming soon ♡' : `${page[0].toUpperCase() + page.slice(1)} is coming soon. This is just the beginning ♡`);
 }));
 document.querySelector('#viewAllStories').addEventListener('click', () => showToast('You’re all caught up on little moments ♡'));
-document.querySelectorAll('.filter').forEach((filter) => filter.addEventListener('click', () => {
-  document.querySelectorAll('.filter').forEach((item) => item.classList.toggle('active', item === filter));
-  if (filter.textContent.trim() === 'Following') showToast('You’re seeing posts from your people ♡');
+document.querySelectorAll('[data-feed-filter]').forEach((filter) => filter.addEventListener('click', () => {
+  const value = filter.dataset.feedFilter;
+  if (!authenticated && value === 'following') {
+    showToast('Sign in to see posts from people you follow ♡');
+    return;
+  }
+  activeFeedFilter = value;
+  document.querySelectorAll('[data-feed-filter]').forEach((item) => {
+    const selected = item === filter;
+    item.classList.toggle('active', selected);
+    item.setAttribute('aria-pressed', String(selected));
+  });
+  document.querySelector('.feed-heading .eyebrow').textContent = value === 'following' ? 'Your close circle' : 'From your people';
+  document.querySelector('.feed-heading h2').textContent = value === 'following' ? 'Following, lately' : 'Your feed, lately';
+  serverPosts = [];
+  nextServerPage = null;
+  if (authenticated) loadServerFeed(1, value);
+  else render();
 }));
 document.querySelector('.notification-button').addEventListener('click', () => showToast('You’re all caught up. We’ll save the good news for you ♡'));
 document.querySelector('.search-button').addEventListener('click', () => showToast('Search is coming soon. Your people are easy to find ♡'));
 document.querySelector('.birthday-person button').addEventListener('click', () => showToast('Birthday wishes are on their way ♡'));
-document.querySelector('.find-friends').addEventListener('click', () => showToast('Finding your people is coming soon ♡'));
-document.querySelector('#loadMore').addEventListener('click', () => {
+document.querySelector('.find-friends').addEventListener('click', (event) => openPeople(event.currentTarget));
+document.querySelector('#loadMore').addEventListener('click', async (event) => {
   if (authenticated && nextServerPage) {
-    loadServerFeed(nextServerPage);
+    event.currentTarget.disabled = true;
+    event.currentTarget.textContent = 'Gathering a little more…';
+    await loadServerFeed(nextServerPage);
     return;
   }
   showToast('You’re all caught up on the good stuff ♡');
+});
+document.querySelector('#closePeople').addEventListener('click', () => peopleDialog.close());
+peopleDialog.addEventListener('close', () => peopleOpener?.focus());
+document.querySelector('#peopleMore').addEventListener('click', async (event) => {
+  if (!nextPeoplePage) return;
+  event.currentTarget.disabled = true;
+  event.currentTarget.textContent = 'Finding more…';
+  await loadPeople(nextPeoplePage);
+  event.currentTarget.textContent = 'Show more people';
+});
+document.querySelector('#peopleList').addEventListener('click', async (event) => {
+  const button = event.target.closest('[data-follow-id]');
+  if (!button) return;
+  const person = peopleRecords.find((item) => item.id === Number(button.dataset.followId));
+  if (!person) return;
+  button.disabled = true;
+  try {
+    const result = await apiRequest(`${window.MEEBLE_API.people}${person.id}/follow/toggle/`, { method: 'POST', data: {} });
+    person.following = result.following;
+    person.follower_count = result.follower_count;
+    renderPeople();
+    if (activeFeedFilter === 'following') {
+      serverPosts = [];
+      nextServerPage = null;
+      await loadServerFeed();
+    }
+  } catch (error) {
+    button.disabled = false;
+    showToast(error.message || 'That follow could not be saved. Try again.');
+  }
 });
 
 render();

@@ -26,3 +26,5 @@ class LocalAppViewsTests(TestCase):
         self.assertContains(response, 'data-display-name="Amelia"')
         self.assertContains(response, 'name="csrf-token" content="')
         self.assertContains(response, 'feed: "/api/feed/"')
+        self.assertContains(response, 'people: "/api/people/"')
+        self.assertContains(response, 'data-feed-filter="following"')

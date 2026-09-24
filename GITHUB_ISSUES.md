@@ -38,9 +38,9 @@ This is the implementation backlog for Meeble in reviewable slices. Issues are t
    - Preserve the seeded showcase feed for first run. Its interactions remain in browser storage as fictional showcase data.
    - Authenticated post creation, editing, deletion, comments, reactions, and paginated database feed reads are in place.
    - Enforce ownership and visibility on every protected operation, including public/follower/private post reads; test owner-only editing and deletion.
-9. **[In progress] Add comments, follows, and feed privacy rules**
-   - Safe comments and reactions work on SQLite-backed posts. Add follow/unfollow flows and expand feed privacy rules.
-   - Cover object-level access boundaries with integration/security tests; base visibility regression coverage is in place.
+9. **[Done] Add comments, follows, and feed privacy rules**
+   - SQLite-backed comments, reactions, follow/unfollow actions, and the Following filter are in place.
+   - Feed and follow endpoints enforce session, visibility, and self-follow boundaries with integration tests.
 10. **Add stories and expiration**
     - Support story creation, viewing, deletion, visibility checks, and expiration.
     - Ensure expired stories are excluded from normal API access.

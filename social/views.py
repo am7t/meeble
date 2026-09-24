@@ -1,10 +1,11 @@
 from django.core.paginator import Paginator
+from django.contrib.auth import get_user_model
 from django.db import IntegrityError, transaction
 from django.db.models import Count, Exists, OuterRef, Q
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_GET, require_POST
-from .models import Comment, Post, Reaction
+from .models import Comment, Follow, Post, Reaction
 
 PAGE_SIZE = 20
 MAX_COMMENT_LENGTH = 500
@@ -74,10 +75,15 @@ def _serialize_post(post, user):
     }
 
 
-def _visible_feed_queryset(user):
-    return (
-        _annotated_posts(user)
-        .filter(
+def _visible_feed_queryset(user, following_only=False):
+    posts = _annotated_posts(user)
+    if following_only:
+        posts = posts.filter(
+            author__followers__follower=user,
+            visibility__in=[Post.Visibility.PUBLIC, Post.Visibility.FOLLOWERS],
+        )
+    else:
+        posts = posts.filter(
             Q(author=user)
             | Q(visibility=Post.Visibility.PUBLIC)
             | Q(
@@ -85,9 +91,7 @@ def _visible_feed_queryset(user):
                 author__followers__follower=user,
             )
         )
-        .distinct()
-        .order_by("-created_at", "-pk")
-    )
+    return posts.distinct().order_by("-created_at", "-pk")
 
 
 @require_GET
@@ -100,12 +104,83 @@ def feed(request):
         return JsonResponse({"error": "Page must be a positive number."}, status=400)
     if page_number < 1:
         return JsonResponse({"error": "Page must be a positive number."}, status=400)
+    feed_filter = request.GET.get("filter", "for-you")
+    if feed_filter not in {"for-you", "following"}:
+        return JsonResponse({"error": "Choose a supported feed filter."}, status=400)
 
-    page = Paginator(_visible_feed_queryset(request.user), PAGE_SIZE).get_page(page_number)
+    page = Paginator(
+        _visible_feed_queryset(request.user, following_only=feed_filter == "following"), PAGE_SIZE
+    ).get_page(page_number)
     return JsonResponse(
         {
             "results": [_serialize_post(post, request.user) for post in page.object_list],
             "next_page": page.next_page_number() if page.has_next() else None,
+        }
+    )
+
+
+@require_GET
+def people(request):
+    if not request.user.is_authenticated:
+        return _authentication_error()
+    try:
+        page_number = int(request.GET.get("page", "1"))
+    except ValueError:
+        return JsonResponse({"error": "Page must be a positive number."}, status=400)
+    if page_number < 1:
+        return JsonResponse({"error": "Page must be a positive number."}, status=400)
+
+    User = get_user_model()
+    people_page = Paginator(
+        User.objects.exclude(pk=request.user.pk)
+        .select_related("profile")
+        .annotate(
+            _api_following=Exists(
+                Follow.objects.filter(follower=request.user, followed_id=OuterRef("pk"))
+            ),
+            _api_follower_count=Count("followers", distinct=True),
+        )
+        .order_by("profile__display_name", "pk"),
+        PAGE_SIZE,
+    ).get_page(page_number)
+    return JsonResponse(
+        {
+            "results": [
+                {
+                    "id": user.pk,
+                    "name": user.profile.display_name,
+                    "handle": f"@{user.profile.handle}",
+                    "following": user._api_following,
+                    "follower_count": user._api_follower_count,
+                }
+                for user in people_page.object_list
+            ],
+            "next_page": people_page.next_page_number() if people_page.has_next() else None,
+        }
+    )
+
+
+@require_POST
+def toggle_follow(request, user_id):
+    if not request.user.is_authenticated:
+        return _authentication_error()
+    User = get_user_model()
+    target = get_object_or_404(User.objects.exclude(pk=request.user.pk), pk=user_id)
+    follow = Follow.objects.filter(follower=request.user, followed=target).first()
+    if follow:
+        follow.delete()
+        following = False
+    else:
+        try:
+            with transaction.atomic():
+                Follow.objects.create(follower=request.user, followed=target)
+            following = True
+        except IntegrityError:
+            following = Follow.objects.filter(follower=request.user, followed=target).exists()
+    return JsonResponse(
+        {
+            "following": following,
+            "follower_count": target.followers.count(),
         }
     )
 
