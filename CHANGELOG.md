@@ -1,5 +1,11 @@
 # Changelog
 
+## Planned
+
+- Introduce a self-hosted Django + SQLite foundation while retaining the current showcase UI.
+- Track the incremental implementation backlog in `GITHUB_ISSUES.md`.
+
+
 ## Unreleased
 
 - Created the first offline-friendly Meeble showcase shell and seeded social feed.
