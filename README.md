@@ -24,7 +24,8 @@ Then visit `http://127.0.0.1:8000`. The development server binds to this compute
 - Demo profiles, stories, posts, and community sidebar.
 - Locally persisted post creation, likes, comments, and hidden posts.
 - Local email/password registration, sign-in, and sign-out use Django password hashing and database-backed sessions.
-- SQLite now has relational profile, post, comment, reaction, and follow tables with constraints; editable profiles and feed APIs are still being built.
+- Profiles are editable by their signed-in owner, with supported color and layout choices saved in SQLite.
+- SQLite has relational profile, post, comment, reaction, and follow tables; the seeded home feed still uses browser storage while feed APIs are built.
 - No real Google/Apple sign-in, email delivery, upload, messaging, marketplace, or remote service integration yet.
 
 ## Development roadmap

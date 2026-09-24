@@ -10,8 +10,8 @@ class SocialSchemaTests(TestCase):
         User = get_user_model()
         self.amelia = User.objects.create_user("amelia@example.com", "safe demo password")
         self.jules = User.objects.create_user("jules@example.com", "safe demo password")
-        Profile.objects.create(user=self.amelia, handle="amelia", display_name="Amelia Rose")
-        Profile.objects.create(user=self.jules, handle="jules", display_name="Jules Parker")
+        Profile.objects.filter(user=self.amelia).update(handle="amelia", display_name="Amelia Rose")
+        Profile.objects.filter(user=self.jules).update(handle="jules", display_name="Jules Parker")
         self.post = Post.objects.create(author=self.amelia, body="A small happy moment")
 
     def test_sqlite_enforces_foreign_keys(self):
@@ -21,7 +21,7 @@ class SocialSchemaTests(TestCase):
 
     def test_profile_handles_are_case_insensitively_unique(self):
         with self.assertRaises(IntegrityError), transaction.atomic():
-            Profile.objects.create(user=self.create_user("third@example.com"), handle="AMELIA")
+            Profile.objects.filter(user=self.jules).update(handle="AMELIA")
 
     def test_follow_relationship_is_unique_and_cannot_target_self(self):
         Follow.objects.create(follower=self.amelia, followed=self.jules)
@@ -55,13 +55,9 @@ class SocialSchemaTests(TestCase):
 
     def test_profile_field_lengths_are_constrained_in_sqlite(self):
         with self.assertRaises(IntegrityError), transaction.atomic():
-            Profile.objects.create(
-                user=self.create_user("third@example.com"), handle="a", display_name="A"
-            )
+            Profile.objects.filter(user=self.jules).update(handle="a")
         with self.assertRaises(IntegrityError), transaction.atomic():
-            Profile.objects.create(
-                user=self.create_user("fourth@example.com"), handle="fourth", display_name="d" * 41
-            )
+            Profile.objects.filter(user=self.jules).update(display_name="d" * 41)
 
     def test_deleting_an_account_cascades_its_social_records(self):
         self.amelia.delete()

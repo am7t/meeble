@@ -2,7 +2,7 @@
 
 ## Current local application foundation
 
-Django serves the current UI from `web/templates/web/index.html` and its CSS, JavaScript, and local SVG assets from `web/static/web/`. Run it on `127.0.0.1` only. SQLite is configured in `meeble_site/settings.py`; `accounts.User` is the custom email-identified user model and has a tracked migration. Account screens provide local registration, sign-in, and POST-only sign-out. Registration creates a relational profile. Django owns password hashing, database-backed session middleware, and CSRF protection. Relational profile, post, comment, reaction, and follow tables are now present. The home feed itself remains fictional seed data in the browser and its likes, comments, posts, and hidden state still live in versioned `localStorage` while feed APIs are built.
+Django serves the current UI from `web/templates/web/index.html` and its CSS, JavaScript, and local SVG assets from `web/static/web/`. Run it on `127.0.0.1` only. SQLite is configured in `meeble_site/settings.py`; `accounts.User` is the custom email-identified user model and has a tracked migration. Account screens provide local registration, sign-in, and POST-only sign-out. New accounts receive a relational profile, and signed-in users can edit only their own profile and validated theme/layout choices. Django owns password hashing, database-backed session middleware, and CSRF protection. Relational profile, post, comment, reaction, and follow tables are present. The home feed itself remains fictional seed data in the browser and its likes, comments, posts, and hidden state still live in versioned `localStorage` while feed APIs are built.
 
 The UI writes only after a user action. Storage errors are handled with a readable message, and user-entered text is HTML-escaped before feed rendering. The local database file is excluded from Git.
 
@@ -27,4 +27,4 @@ Provider sign-in, email delivery, real-time calling, and payments need network s
 - **Listing / Order / OrderItem**: seller-owned inventory and immutable purchase snapshots; external payment state remains behind an adapter.
 - **MediaAsset**: owner, storage key, validated type/size, visibility, and provenance metadata where required.
 
-Profile, post, comment, reaction, and follow tables have initial constraints and indexes. Add later domain tables only when implementing their feature rather than anticipating every idea now. The existing UI still does not read or write these records; server endpoints must enforce ownership and visibility before connecting it.
+Profile, post, comment, reaction, and follow tables have initial constraints and indexes. The profile editor writes the signed-in user's own record through a server-side form. The existing home feed still does not read or write social activity records; future endpoints must enforce ownership and visibility before connecting it.

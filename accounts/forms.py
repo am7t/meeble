@@ -3,7 +3,13 @@ from django.contrib.auth import password_validation
 from django.contrib.auth.forms import AuthenticationForm
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
-from .models import User
+from .models import (
+    PROFILE_LAYOUT_CHOICES,
+    PROFILE_THEME_CHOICES,
+    Profile,
+    User,
+    validate_profile_customization,
+)
 
 
 class EmailAuthenticationForm(AuthenticationForm):
@@ -61,3 +67,53 @@ class RegistrationForm(forms.ModelForm):
         if commit:
             user.save()
         return user
+
+
+class ProfileEditForm(forms.ModelForm):
+    theme = forms.ChoiceField(label="Color mood", choices=PROFILE_THEME_CHOICES)
+    layout = forms.ChoiceField(label="Profile feel", choices=PROFILE_LAYOUT_CHOICES)
+
+    class Meta:
+        model = Profile
+        fields = ("handle", "display_name", "bio")
+        widgets = {
+            "handle": forms.TextInput(attrs={"autocomplete": "nickname", "maxlength": 24}),
+            "display_name": forms.TextInput(attrs={"autocomplete": "name", "maxlength": 40}),
+            "bio": forms.Textarea(attrs={"rows": 3, "maxlength": 160}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        customization = self.instance.customization or {}
+        self.fields["theme"].initial = customization.get("theme", "moss")
+        self.fields["layout"].initial = customization.get("layout", "cozy")
+        self.fields["handle"].help_text = "Use 3–24 letters, numbers, or underscores."
+        self.fields["bio"].help_text = "Up to 160 characters."
+
+    def clean_handle(self):
+        handle = self.cleaned_data["handle"].strip().lower()
+        conflicts = Profile.objects.filter(handle__iexact=handle).exclude(pk=self.instance.pk)
+        if conflicts.exists():
+            raise ValidationError("That handle is already in use. Try another one.")
+        return handle
+
+    def clean(self):
+        cleaned = super().clean()
+        if "theme" in cleaned and "layout" in cleaned:
+            try:
+                validate_profile_customization(
+                    {"theme": cleaned["theme"], "layout": cleaned["layout"]}
+                )
+            except ValidationError as error:
+                self.add_error(None, error)
+        return cleaned
+
+    def save(self, commit=True):
+        profile = super().save(commit=False)
+        profile.customization = {
+            "theme": self.cleaned_data["theme"],
+            "layout": self.cleaned_data["layout"],
+        }
+        if commit:
+            profile.save()
+        return profile

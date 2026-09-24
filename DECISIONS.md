@@ -32,8 +32,8 @@
 
 **Status:** Accepted
 
-**Decision:** Keep authentication credentials in the custom User model, public identity in a one-to-one Profile, and social activity in separate Post, Comment, Reaction, and Follow records. Add database constraints for case-insensitive handles, non-empty bounded text, valid visibility/reaction values, unique reactions/follows, and no self-follows. Store feature activity in SQLite as those workflows move server-side.
+**Decision:** Keep authentication credentials in the custom User model, public identity in a one-to-one Profile, and social activity in separate Post, Comment, Reaction, and Follow records. Store supported appearance choices as a validated JSON object. Add database constraints for case-insensitive handles, non-empty bounded text, valid visibility/reaction values, unique reactions/follows, and no self-follows. Store feature activity in SQLite as those workflows move server-side.
 
 **Reason:** Relational constraints provide a reliable base before endpoint authorization is added and keep account credentials separate from public profile data. Seeded showcase content remains available while the UI is migrated incrementally.
 
-**Tradeoff:** Creating the schema alone does not make browser storage trusted or enforce user access. Any future endpoints must explicitly check ownership and visibility, with denied-access tests, before exposing these records.
+**Tradeoff:** Creating the schema alone does not make browser storage trusted or enforce user access. The profile editor is tied to the signed-in account; future endpoints must explicitly check ownership and visibility, with denied-access tests, before exposing social records.

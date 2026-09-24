@@ -1,0 +1,35 @@
+{% extends "accounts/base_auth.html" %}
+{% load static %}
+{% block title %}Edit your profile · Meeble{% endblock %}
+{% block page_class %}profile-page{% endblock %}
+{% block extra_styles %}<link rel="stylesheet" href="{% static 'web/profile.css' %}">{% endblock %}
+{% block content %}
+  <span class="auth-eyebrow">A LITTLE MORE YOU</span>
+  <h1 id="auth-title">Your corner.</h1>
+  <p class="auth-intro">Shape the little details your people see.</p>
+
+  {% if messages %}
+    {% for message in messages %}<p class="profile-saved" role="status">{{ message }}</p>{% endfor %}
+  {% endif %}
+
+  <div class="profile-preview" data-theme="{{ profile.customization.theme }}" data-layout="{{ profile.customization.layout }}" aria-label="Current profile preview">
+    <span class="profile-avatar" aria-hidden="true">{{ profile.display_name|first|upper }}</span>
+    <span class="profile-preview-copy"><strong>{{ profile.display_name }}</strong><small>@{{ profile.handle }}</small></span>
+    <span class="profile-preview-note">YOUR SPACE</span>
+  </div>
+
+  <form class="auth-form profile-form" method="post" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="auth-errors" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+    {% for field in form %}
+      <div class="auth-field profile-field{% if field.name == 'theme' or field.name == 'layout' %} profile-choice{% endif %}">
+        {{ field.label_tag }}{{ field }}
+        {% if field.help_text %}<small class="field-help">{{ field.help_text }}</small>{% endif %}
+        {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+      </div>
+    {% endfor %}
+    <button class="auth-submit" type="submit">Save profile <span aria-hidden="true">→</span></button>
+  </form>
+  <p class="auth-switch"><a href="{% url 'home' %}">Back to your feed</a></p>
+  <p class="auth-provider-note">Your profile is saved in this app’s local SQLite database.</p>
+{% endblock %}

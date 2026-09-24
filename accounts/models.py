@@ -1,10 +1,32 @@
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models import Q
 from django.db.models.functions import Length, Lower
 from django.db.models.lookups import GreaterThanOrEqual, LessThanOrEqual
+
+PROFILE_THEME_CHOICES = (
+    ("moss", "Moss and cream"),
+    ("blush", "Blush and rose"),
+    ("lilac", "Lilac dusk"),
+)
+PROFILE_LAYOUT_CHOICES = (("cozy", "Cozy"), ("airy", "Airy"))
+
+
+def default_profile_customization():
+    return {"theme": "moss", "layout": "cozy"}
+
+
+def validate_profile_customization(value):
+    if (
+        not isinstance(value, dict)
+        or set(value) != {"theme", "layout"}
+        or value.get("theme") not in dict(PROFILE_THEME_CHOICES)
+        or value.get("layout") not in dict(PROFILE_LAYOUT_CHOICES)
+    ):
+        raise ValidationError("Choose one of the supported profile themes and layouts.")
 
 
 class UserManager(BaseUserManager):
@@ -50,6 +72,9 @@ class Profile(models.Model):
     )
     display_name = models.CharField(max_length=40)
     bio = models.CharField(max_length=160, blank=True)
+    customization = models.JSONField(
+        default=default_profile_customization, validators=[validate_profile_customization]
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

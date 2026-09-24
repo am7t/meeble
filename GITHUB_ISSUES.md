@@ -25,9 +25,9 @@ This is the implementation backlog for Meeble in reviewable slices. Issues are t
 5. **Add account recovery and email-provider boundaries**
    - Design verification and recovery token flows with one-time, expiring tokens.
    - Keep outbound mail behind an adapter; document that delivery needs an email service and is not available in a fully offline run.
-6. **Build editable profiles and validated customization**
+6. **[Done] Build editable profiles and validated customization**
    - Store profile fields relationally and supported layout/theme settings as validated structured data.
-   - Enforce owner-only edits in the server layer.
+   - Enforce owner-only edits in the server layer; public profile pages remain future work.
 7. **Add in-app Polaroid capture**
    - Capture through the app camera flow only; validate provenance server-side.
    - Keep media private and enforce access checks on delivery.
