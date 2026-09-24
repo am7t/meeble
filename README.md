@@ -1,6 +1,6 @@
 # Meeble
 
-Meeble is a warm, playful social-platform showcase prototype. The first slice is a responsive home feed with sample stories, seeded posts, local likes and comments, post creation, and a few UI destinations represented by friendly “coming soon” states.
+Meeble is a warm, playful social-platform showcase prototype with an editorial visual identity. The first slice is a responsive home feed with sample stories, original local vector portraits and post artwork, locally saved likes and comments, post creation, and a few UI destinations represented by friendly “coming soon” states.
 
 ## Run locally
 
@@ -14,7 +14,7 @@ Then visit `http://localhost:8000`. Feed edits are stored in browser `localStora
 
 ## Current scope
 
-- Offline-friendly static app shell and responsive feed experience.
+- Offline static app shell, bespoke art direction, and responsive feed experience.
 - Demo profiles, stories, posts, and community sidebar.
 - Locally persisted post creation, likes, comments, and hidden posts.
 - No backend, real authentication, upload, messaging, marketplace, or remote service integration yet.

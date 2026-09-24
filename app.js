@@ -2,11 +2,12 @@ const STORAGE_KEY = 'meeble.showcase.v1';
 
 const initialState = {
   posts: [
-    { id: 'p1', author: 'jules parker', handle: '@jules.jpg', avatar: 'J', avatarClass: 'avatar-jules', time: '12 min ago', caption: 'Found the tiniest coffee shop tucked away on Bleecker and I think I live here now ☕', art: 'cafe', artLabel: 'slow mornings ♡', likes: 28, liked: false, comments: [{ name: 'amelia rose', text: 'adding this to our list immediately' }, { name: 'nina james', text: 'the coffee is SO good here' }] },
-    { id: 'p2', author: 'lila chen', handle: '@lilachen', avatar: 'L', avatarClass: 'avatar-lila', time: '1 hr ago', caption: 'sunday looked a little something like this 🌞', art: 'sunday', artLabel: 'soft days, soft light', likes: 42, liked: false, comments: [{ name: 'maya flowers', text: 'this light!!!' }] },
-    { id: 'p3', author: 'nina james', handle: '@nina.j', avatar: 'N', avatarClass: 'avatar-nina', time: '3 hrs ago', caption: 'a little reminder that the flowers you buy yourself count the most 💐', art: 'flowers', artLabel: 'little joys', likes: 36, liked: false, comments: [] }
+    { id: 'p1', author: 'jules parker', handle: '@jules.jpg', avatar: 'jules', time: '12 min ago', caption: 'Found the tiniest coffee shop tucked away on Bleecker and I think I live here now ☕', art: 'cafe', artLabel: 'slow mornings ♡', likes: 28, liked: false, comments: [{ name: 'amelia rose', text: 'adding this to our list immediately' }, { name: 'nina james', text: 'the coffee is SO good here' }] },
+    { id: 'p2', author: 'lila chen', handle: '@lilachen', avatar: 'lila', time: '1 hr ago', caption: 'sunday looked a little something like this 🌞', art: 'sunday', artLabel: 'soft days, soft light', likes: 42, liked: false, comments: [{ name: 'maya flowers', text: 'this light!!!' }] },
+    { id: 'p3', author: 'nina james', handle: '@nina.j', avatar: 'nina', time: '3 hrs ago', caption: 'a little reminder that the flowers you buy yourself count the most 💐', art: 'flowers', artLabel: 'little joys', likes: 36, liked: false, comments: [] }
   ],
-  hidden: []
+  hidden: [],
+  saved: []
 };
 
 function loadState() {
@@ -18,8 +19,7 @@ function loadState() {
           id: post.id.slice(0, 80),
           author: typeof post.author === 'string' ? post.author.slice(0, 80) : 'a meeble friend',
           handle: typeof post.handle === 'string' ? post.handle.slice(0, 80) : '@friend',
-          avatar: typeof post.avatar === 'string' ? post.avatar.slice(0, 2) : 'M',
-          avatarClass: ['avatar-self', 'avatar-jules', 'avatar-lila', 'avatar-nina', 'avatar-maya'].includes(post.avatarClass) ? post.avatarClass : 'avatar-self',
+          avatar: ({ A: 'amelia', J: 'jules', L: 'lila', N: 'nina', M: 'maya' })[post.avatar] || (['amelia', 'jules', 'lila', 'nina', 'maya'].includes(post.avatar) ? post.avatar : 'amelia'),
           time: typeof post.time === 'string' ? post.time.slice(0, 40) : 'a little while ago',
           caption: typeof post.caption === 'string' ? post.caption.slice(0, 500) : '',
           art: ['cafe', 'sunday', 'flowers', 'custom'].includes(post.art) ? post.art : 'custom',
@@ -29,7 +29,8 @@ function loadState() {
           comments: Array.isArray(post.comments) ? post.comments.filter((comment) => comment && typeof comment.name === 'string' && typeof comment.text === 'string').slice(-200).map((comment) => ({ name: comment.name.slice(0, 80), text: comment.text.slice(0, 240) })) : []
         }));
       const hidden = Array.isArray(saved.hidden) ? saved.hidden.filter((id) => typeof id === 'string').slice(0, 500) : [];
-      return { posts, hidden };
+      const savedPosts = Array.isArray(saved.saved) ? saved.saved.filter((id) => typeof id === 'string').slice(0, 500) : [];
+      return { posts, hidden, saved: savedPosts };
     }
   } catch (error) { console.warn('Meeble could not read saved demo data; starting with the sample feed.', error); }
   return structuredClone(initialState);
@@ -49,12 +50,14 @@ function escapeHTML(value) {
 
 function postTemplate(post) {
   const art = post.art === 'custom' ? 'custom' : post.art;
+  const avatar = ['amelia', 'jules', 'lila', 'nina', 'maya'].includes(post.avatar) ? post.avatar : 'amelia';
+  const artFile = { cafe: 'assets/post-cafe.svg', sunday: 'assets/post-sunday.svg', flowers: 'assets/post-flowers.svg' }[art];
   const caption = escapeHTML(post.caption).replace(/(^|\s)(#[\p{L}\p{N}_]+)/gu, '$1<span class="hashtag">$2</span>');
   return `<article class="post-card" data-id="${escapeHTML(post.id)}">
-    <div class="post-top"><span class="avatar ${escapeHTML(post.avatarClass || 'avatar-self')}">${escapeHTML(post.avatar || 'M')}</span><div class="post-author"><strong>${escapeHTML(post.author)}</strong><small>${escapeHTML(post.handle)} · ${escapeHTML(post.time)}</small></div><button class="post-menu" aria-label="Post options" data-action="menu">···</button></div>
+    <div class="post-top"><img class="avatar" src="assets/avatar-${avatar}.svg" alt=""><div class="post-author"><strong>${escapeHTML(post.author)}</strong><small>${escapeHTML(post.handle)} <span>·</span> ${escapeHTML(post.time)}</small></div><button class="post-menu" aria-label="Post options" data-action="menu">···</button></div>
     <p class="post-caption"><strong>${escapeHTML(post.author.split(' ')[0])}</strong> ${caption}</p>
-    <div class="post-art ${art}" role="img" aria-label="Decorative illustration for ${escapeHTML(post.author)}'s post">${art === 'cafe' ? `<span class="coffee-cup"></span>` : ''}<span class="art-label">${escapeHTML(post.artLabel || '')}</span></div>
-    <div class="post-actions"><button class="action-btn ${post.liked ? 'liked' : ''}" data-action="like" aria-label="${post.liked ? 'Unlike' : 'Like'} post"><span>${post.liked ? '♥' : '♡'}</span> ${post.likes}</button><button class="action-btn" data-action="focus-comment"><span>◯</span> ${post.comments.length || ''}</button><span class="action-spacer"></span><span class="post-time">a little moment ago</span></div>
+    <div class="post-art ${art}" role="img" aria-label="${escapeHTML(post.artLabel || `Illustration for ${post.author}'s post`)}">${artFile ? `<img src="${artFile}" alt="">` : `<div class="custom-art"><span class="custom-art-kicker">A NOTE FROM AMELIA</span><span class="custom-art-text">the little<br>things <em>matter.</em></span><span class="custom-art-flower">✳</span></div>`}</div>
+    <div class="post-actions"><button class="action-btn ${post.liked ? 'liked' : ''}" data-action="like" aria-label="${post.liked ? 'Unlike' : 'Like'} post" aria-pressed="${post.liked}"><svg class="icon"><use href="#i-heart"/></svg><span>${post.likes}</span></button><button class="action-btn" data-action="focus-comment" aria-label="Comment"><svg class="icon"><use href="#i-comment"/></svg><span>${post.comments.length || ''}</span></button><button class="action-btn" data-action="share" aria-label="Share post"><svg class="icon"><use href="#i-send"/></svg></button><span class="action-spacer"></span><button class="action-btn bookmark-btn ${state.saved.includes(post.id) ? 'saved' : ''}" data-action="bookmark" aria-label="${state.saved.includes(post.id) ? 'Remove saved post' : 'Save post'}" aria-pressed="${state.saved.includes(post.id)}"><svg class="icon"><use href="#i-bookmark"/></svg></button></div>
     <div class="comments-area">${post.comments.map((comment) => `<div class="comment"><strong>${escapeHTML(comment.name)}</strong>${escapeHTML(comment.text)}</div>`).join('')}<form class="comment-form"><input name="comment" maxlength="240" aria-label="Write a comment" placeholder="Leave a little love…" required><button type="submit">Post</button></form></div>
   </article>`;
 }
@@ -65,18 +68,18 @@ function render() {
 }
 
 const stories = [
-  { name: 'Your story', avatar: 'A', cls: 'avatar-self', own: true },
-  { name: 'jules', avatar: 'J', cls: 'avatar-jules' },
-  { name: 'lila', avatar: 'L', cls: 'avatar-lila' },
-  { name: 'maya', avatar: 'M', cls: 'avatar-maya' },
-  { name: 'nina', avatar: 'N', cls: 'avatar-nina' },
-  { name: 'sophie', avatar: 'S', cls: 'avatar-lila' },
-  { name: 'ella', avatar: 'E', cls: 'avatar-jules' }
+  { name: 'Your story', avatar: 'amelia', own: true },
+  { name: 'jules', avatar: 'jules' },
+  { name: 'lila', avatar: 'lila' },
+  { name: 'maya', avatar: 'maya' },
+  { name: 'nina', avatar: 'nina' },
+  { name: 'sophie', avatar: 'jules' },
+  { name: 'ella', avatar: 'lila' }
 ];
 
-document.querySelector('#storiesRow').innerHTML = stories.map((story) => `<button class="story ${story.own ? 'is-own' : ''}" data-story="${escapeHTML(story.name)}" aria-label="${story.own ? 'Add to your story' : `View ${story.name}'s story`}"><span class="story-ring"><span class="avatar ${story.cls}">${story.avatar}</span>${story.own ? '<span class="story-add">+</span>' : ''}</span><span class="story-name">${escapeHTML(story.name)}</span></button>`).join('');
+document.querySelector('#storiesRow').innerHTML = stories.map((story, index) => `<button class="story ${story.own ? 'is-own' : ''}" data-story="${escapeHTML(story.name)}" aria-label="${story.own ? 'Add to your story' : `View ${story.name}'s story`}"><span class="story-ring"><img class="avatar" src="assets/avatar-${story.avatar}.svg" alt="">${story.own ? '<span class="story-add">+</span>' : `<span class="story-count">${index + 2}</span>`}</span><span class="story-name">${escapeHTML(story.name)}</span></button>`).join('');
 
-document.querySelector('#friendsList').innerHTML = [stories[1], stories[2], stories[3]].map((friend, index) => `<div class="friend-row"><span class="avatar ${friend.cls}">${friend.avatar}</span><span class="friend-info"><strong>${friend.name === 'jules' ? 'Jules Parker' : friend.name === 'lila' ? 'Lila Chen' : 'Maya Flowers'}</strong><small>${['probably at a cafe ☕', 'in her soft era ✿', 'sending you a hug ♡'][index]}</small></span><span class="online"></span></div>`).join('');
+document.querySelector('#friendsList').innerHTML = [stories[1], stories[2], stories[3]].map((friend, index) => `<div class="friend-row"><img class="avatar" src="assets/avatar-${friend.avatar}.svg" alt=""><span class="friend-info"><strong>${friend.name === 'jules' ? 'Jules Parker' : friend.name === 'lila' ? 'Lila Chen' : 'Maya Flowers'}</strong><small>${['probably at a cafe ☕', 'in her soft era ✿', 'sending you a hug ♡'][index]}</small></span><span class="online"></span></div>`).join('');
 
 function showToast(message) {
   const dialog = document.querySelector('#toastDialog');
@@ -95,6 +98,10 @@ feed.addEventListener('click', (event) => {
     post.likes = Math.max(0, post.likes + (post.liked ? 1 : -1));
     saveState(); render();
   } else if (button.dataset.action === 'focus-comment') card.querySelector('[name="comment"]').focus();
+  else if (button.dataset.action === 'bookmark') {
+    state.saved = state.saved.includes(post.id) ? state.saved.filter((id) => id !== post.id) : [...state.saved, post.id];
+    saveState(); render();
+  } else if (button.dataset.action === 'share') showToast('Sharing a little moment with a friend is coming soon ♡');
   else if (button.dataset.action === 'menu') {
     const remove = confirm('Hide this post from your local demo feed?');
     if (remove) { state.hidden.push(post.id); saveState(); render(); }
@@ -119,7 +126,7 @@ document.querySelector('#postForm').addEventListener('submit', (event) => {
   event.preventDefault();
   const caption = document.querySelector('#postCaption').value.trim();
   if (!caption) return;
-  state.posts.unshift({ id: `p${Date.now()}`, author: 'amelia rose', handle: '@amelia.rose', avatar: 'A', avatarClass: 'avatar-self', time: 'just now', caption, art: 'custom', artLabel: 'a little moment ♡', likes: 0, liked: false, comments: [] });
+  state.posts.unshift({ id: `p${Date.now()}`, author: 'amelia rose', handle: '@amelia.rose', avatar: 'amelia', time: 'just now', caption, art: 'custom', artLabel: 'a little moment ♡', likes: 0, liked: false, comments: [] });
   saveState(); render(); composer.close(); event.target.reset();
   document.querySelector('#feed').scrollIntoView({ behavior: 'smooth', block: 'start' });
 });

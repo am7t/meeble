@@ -3,43 +3,55 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#fff9f4">
-  <meta name="description" content="Meeble — your little corner of the internet.">
-  <title>Meeble — your little corner</title>
+  <meta name="theme-color" content="#f5f4ef">
+  <meta name="description" content="Meeble — a little place for all the good bits.">
+  <title>Meeble — a little place for you</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <svg class="icon-defs" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="m3.5 10 8.5-7 8.5 7v10.5H14v-7h-4v7H3.5z"/></symbol>
+    <symbol id="i-discover" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="7.2"/><path d="m16.2 16.2 4.3 4.3M13.8 8l-1.7 4.1-4.1 1.7 1.7-4.1z"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M20 11.5a7.5 7.5 0 0 1-8 7.5 9 9 0 0 1-3.6-.8L4 20l1.3-3.6A7 7 0 0 1 4 12c0-4.2 3.6-7.5 8-7.5s8 2.8 8 7z"/><path d="M8 12h.01M12 12h.01M16 12h.01"/></symbol>
+    <symbol id="i-bag" viewBox="0 0 24 24"><path d="M4 8h16l-1 12H5zM9 8a3 3 0 0 1 6 0"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M20.8 8.8c0 5.4-8.8 11-8.8 11s-8.8-5.6-8.8-11A4.8 4.8 0 0 1 12 6.1a4.8 4.8 0 0 1 8.8 2.7Z"/></symbol>
+    <symbol id="i-comment" viewBox="0 0 24 24"><path d="M20 11.5a7.5 7.5 0 0 1-8 7.5 9 9 0 0 1-3.6-.8L4 20l1.3-3.6A7 7 0 0 1 4 12c0-4.2 3.6-7.5 8-7.5s8 2.8 8 7z"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="m21 3-7.5 18-3.8-7.7L2 9.5 21 3Z M9.7 13.3 21 3"/></symbol>
+    <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M6 4.5h12v16l-6-4-6 4z"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 2 2.2 7.8L22 12l-7.8 2.2L12 22l-2.2-7.8L2 12l7.8-2.2z"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 12h15m-6-6 6 6-6 6"/></symbol>
+  </svg>
   <div class="app-shell">
-    <aside class="sidebar">
-      <a class="brand" href="#home" aria-label="Meeble home"><span class="brand-mark">m</span><span>meeble<span class="brand-dot">.</span></span></a>
-      <div class="sidebar-label">YOUR SPACE</div>
+    <header class="topbar">
+      <a class="brand" href="#home" aria-label="Meeble home"><span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span><span>meeble<span class="brand-dot">.</span></span></a>
       <nav class="main-nav" aria-label="Main navigation">
-        <button class="nav-item active" data-page="home"><span class="nav-icon">⌂</span>Home</button>
-        <button class="nav-item" data-page="explore"><span class="nav-icon">⌕</span>Explore <span class="nav-badge">new</span></button>
-        <button class="nav-item" data-page="messages"><span class="nav-icon">♡</span>Messages<span class="unread-dot"></span></button>
-        <button class="nav-item" data-page="grail"><span class="nav-icon">✳</span>Grail</button>
+        <button class="nav-item active" data-page="home"><svg class="icon"><use href="#i-home"/></svg><span>Home</span></button>
+        <button class="nav-item" data-page="explore"><svg class="icon"><use href="#i-discover"/></svg><span>Explore</span></button>
+        <button class="nav-item" data-page="messages"><svg class="icon"><use href="#i-chat"/></svg><span>Chats</span><i class="nav-ping"></i></button>
+        <button class="nav-item" data-page="grail"><svg class="icon"><use href="#i-bag"/></svg><span>Grail</span></button>
       </nav>
-      <div class="sidebar-label community-label">YOUR PEOPLE</div>
-      <button class="nav-item" data-page="friends"><span class="nav-icon">♧</span>Close friends</button>
-      <div class="sidebar-bottom">
-        <div class="mood-card"><span class="mood-spark">✦</span><p>Make this<br>space <em>yours.</em></p><span class="mood-note">A little corner, all your own.</span></div>
-        <button class="profile-mini" data-page="profile"><span class="avatar avatar-self">A</span><span><strong>amelia rose</strong><small>@amelia.rose</small></span><span class="more">···</span></button>
-      </div>
-    </aside>
-
-    <main class="main-content">
-      <header class="topbar"><div class="mobile-brand"><span class="brand-mark">m</span> meeble<span class="brand-dot">.</span></div><div class="topbar-date"><span class="sun-icon">☼</span> a little hello for your tuesday</div><div class="top-actions"><button class="icon-button search-button" aria-label="Search">⌕</button><button class="icon-button notification-button" aria-label="Notifications">♧<i></i></button><button class="new-post-button" id="openComposer"><span>＋</span> Create</button></div></header>
-      <div class="content-wrap">
-        <section class="welcome-row"><div><div class="eyebrow">TUESDAY, SEPTEMBER 23</div><h1>Your little <em>corner</em> of the internet.</h1><p class="welcome-copy">The good bits, from your favorite people.</p></div><span class="welcome-doodle" aria-hidden="true">✳</span></section>
-        <section class="stories-section" aria-label="Stories"><div class="section-heading"><h2>Little moments</h2><button class="text-link" id="viewAllStories">See all <span>→</span></button></div><div class="stories-row" id="storiesRow"></div></section>
-        <div class="feed-layout">
-          <section class="feed-column"><div class="feed-heading"><div><span class="eyebrow">YOUR PEOPLE, LATELY</span><h2>The good stuff</h2></div><div class="feed-filter"><button class="filter active">For you</button><button class="filter">Following</button></div></div><div id="feed" class="feed-list"></div><button class="load-more" id="loadMore">You’re all caught up <span>♡</span></button></section>
-          <aside class="right-rail"><section class="rail-card note-card"><div class="rail-title"><span>✦</span> a tiny reminder</div><p>You don’t have to have it all figured out to be <em>right where you need to be.</em></p><span class="note-signature">a note from meeble ♡</span></section><section class="rail-card birthday-card"><div class="rail-title">COMING UP <span class="party">✷</span></div><div class="birthday-person"><span class="avatar avatar-lila">L</span><span><strong>Lila’s birthday</strong><small>in 3 days · Sep 26</small></span><button aria-label="Send birthday wishes">♡</button></div></section><section class="rail-card friends-card"><div class="rail-title">YOUR PEOPLE <button class="dots" aria-label="More">···</button></div><div id="friendsList"></div><button class="find-friends">Find your people <span>→</span></button></section><div class="footer-links"><a href="#about">About</a><a href="#guidelines">Guidelines</a><a href="#privacy">Privacy</a><span>© 2026 meeble</span></div></aside>
-        </div>
+      <div class="top-actions"><button class="icon-button search-button" aria-label="Search"><svg class="icon"><use href="#i-discover"/></svg></button><button class="icon-button notification-button" aria-label="Notifications"><svg class="icon"><use href="#i-bell"/></svg><i></i></button><button class="new-post-button" id="openComposer"><svg class="icon"><use href="#i-plus"/></svg><span>New post</span></button></div>
+    </header>
+    <main class="content-wrap" id="home">
+      <section class="welcome-row">
+        <div><div class="eyebrow"><span class="live-mark"></span> YOUR TUESDAY, SEPTEMBER 23</div><h1>Good things happen <em>here.</em></h1><p class="welcome-copy">A little place for the people, finds, and feelings you want to keep.</p></div>
+        <div class="weekly-note"><div class="weekly-note-top"><span>YOUR WEEK IN LITTLE THINGS</span><svg class="icon"><use href="#i-spark"/></svg></div><div class="weekly-note-bottom"><strong>03</strong><span>new stories<br>from your people</span><span class="note-arrow">↗</span></div><div class="note-orbit" aria-hidden="true"></div></div>
+      </section>
+      <section class="stories-section" aria-label="Stories"><div class="section-heading"><div><span class="eyebrow">24 HOURS, A LITTLE CLOSER</span><h2>From your orbit</h2></div><button class="text-link" id="viewAllStories">All stories <svg class="icon"><use href="#i-arrow"/></svg></button></div><div class="stories-row" id="storiesRow"></div></section>
+      <div class="feed-layout">
+        <section class="feed-column"><div class="feed-heading"><div><span class="eyebrow">THE LATEST FROM YOUR PEOPLE</span><h2>Fresh from the group chat</h2></div><div class="feed-filter"><button class="filter active">For you</button><button class="filter">Following</button></div></div><div id="feed" class="feed-list"></div><button class="load-more" id="loadMore">That’s the good stuff for now <span>♡</span></button></section>
+        <aside class="right-rail">
+          <section class="rail-card note-card"><div class="rail-kicker"><svg class="icon"><use href="#i-spark"/></svg> A NOTE FOR TODAY</div><p>You’re allowed to be a work in progress <em>and still be proud of yourself.</em></p><div class="note-footer"><span>leave this one with you</span><span class="note-heart">♡</span></div></section>
+          <section class="rail-card birthday-card"><div class="rail-header"><span>ON THE CALENDAR</span><span class="calendar-date">26 <small>SEP</small></span></div><div class="birthday-person"><img class="avatar" src="assets/avatar-lila.svg" alt=""><span><strong>Lila’s birthday</strong><small>in 3 days · make it sweet</small></span><button aria-label="Send birthday wishes">♡</button></div></section>
+          <section class="rail-card friends-card"><div class="rail-header"><span>YOUR CLOSE CIRCLE</span><button class="dots" aria-label="More">···</button></div><div id="friendsList"></div><button class="find-friends">Meet more people <svg class="icon"><use href="#i-arrow"/></svg></button></section>
+          <div class="footer-links"><a href="#about">About</a><a href="#guidelines">Community</a><a href="#privacy">Privacy</a><span>© 2026 meeble</span></div>
+        </aside>
       </div>
     </main>
   </div>
-  <dialog id="composer" class="composer-dialog"><form method="dialog" id="postForm"><button class="dialog-close" aria-label="Close">×</button><div class="dialog-eyebrow">A LITTLE SOMETHING</div><h2>Share a moment</h2><label for="postCaption">What’s on your mind, Amelia?</label><textarea id="postCaption" maxlength="500" placeholder="The little things are the big things…" required></textarea><div class="composer-tools"><button type="button" id="addPhoto">▧ Add a photo</button><span>♡ shared with your people</span></div><button class="publish-button" type="submit">Share with your people <span>→</span></button></form></dialog>
+  <dialog id="composer" class="composer-dialog"><form method="dialog" id="postForm"><button class="dialog-close" aria-label="Close">×</button><div class="dialog-eyebrow">A LITTLE SOMETHING</div><h2>Share a moment</h2><label for="postCaption">What’s on your mind, Amelia?</label><textarea id="postCaption" maxlength="500" placeholder="The little things are the big things…" required></textarea><div class="composer-tools"><button type="button" id="addPhoto">▧ Add a photo</button><span>♡ shared with your people</span></div><button class="publish-button" type="submit">Share with your people <svg class="icon"><use href="#i-arrow"/></svg></button></form></dialog>
   <dialog id="toastDialog" class="toast-dialog"><p id="toastMessage"></p><button id="toastClose">Okay ♡</button></dialog>
   <script src="app.js" defer></script>
 </body>
