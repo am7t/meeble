@@ -1,0 +1,59 @@
+{% extends "accounts/base_auth.html" %}
+{% load static %}
+{% block title %}{{ profile.display_name }} (@{{ profile.handle }}) · Meeble{% endblock %}
+{% block page_class %}public-profile-page{% endblock %}
+{% block auth_card_class %}public-profile-card{% endblock %}
+{% block auth_card_labelledby %}profile-title{% endblock %}
+{% block auth_card_attributes %}data-theme="{{ profile.customization.theme }}" data-layout="{{ profile.customization.layout }}"{% endblock %}
+{% block extra_styles %}<link rel="stylesheet" href="{% static 'web/profile.css' %}"><link rel="stylesheet" href="{% static 'web/public-profile.css' %}">{% endblock %}
+{% block content %}
+    <a class="profile-back-link" href="{% url 'home' %}">← Back to your feed</a>
+    <header class="public-profile-hero">
+      <span class="profile-avatar public-profile-avatar" aria-hidden="true">{{ profile.display_name|first|upper }}</span>
+      <div class="public-profile-copy">
+        <span class="auth-eyebrow">A LITTLE CORNER OF MEEBLE</span>
+        <h1 id="profile-title">{{ profile.display_name }}</h1>
+        <p class="public-profile-handle">@{{ profile.handle }}</p>
+        {% if profile.bio %}<p class="public-profile-bio">{{ profile.bio|linebreaksbr }}</p>{% endif %}
+      </div>
+      <div class="public-profile-actions">
+        {% if is_owner %}
+          <a class="profile-edit-link" href="{% url 'accounts:profile' %}">Edit profile</a>
+        {% elif user.is_authenticated %}
+          <button class="profile-follow-button{% if is_following %} is-following{% endif %}" id="profileFollow" type="button" data-follow-url="{% url 'social:toggle-follow' profile.user_id %}" aria-pressed="{{ is_following|yesno:'true,false' }}">{% if is_following %}Following{% else %}Follow{% endif %}</button>
+        {% else %}
+          <a class="profile-edit-link" href="{% url 'accounts:login' %}?next={{ request.path|urlencode }}">Sign in to follow</a>
+        {% endif %}
+      </div>
+    </header>
+    <dl class="public-profile-stats">
+      <div><dt>Posts</dt><dd>{{ post_count }}</dd></div>
+      <div><dt>Followers</dt><dd id="profileFollowerCount">{{ follower_count }}</dd></div>
+      <div><dt>Following</dt><dd>{{ following_count }}</dd></div>
+    </dl>
+    <section class="public-profile-posts" aria-labelledby="profile-posts-title">
+      <div class="public-profile-section-heading"><div><span class="auth-eyebrow">LITTLE MOMENTS</span><h2 id="profile-posts-title">{{ profile.display_name }}’s posts</h2></div></div>
+      {% if posts %}
+        <div class="public-profile-post-list">
+          {% for post in posts %}
+            <article class="public-profile-post">
+              <div class="public-profile-post-meta"><span>{{ post.created_at|timesince }} ago</span>{% if post.updated_at > post.created_at %}<span>· edited</span>{% endif %}</div>
+              <p>{{ post.body|linebreaksbr }}</p>
+              <div class="public-profile-post-stats"><span>♡ {{ post.reaction_count }}</span><span>{{ post.comment_count }} comments</span></div>
+            </article>
+          {% endfor %}
+        </div>
+        {% if posts.has_other_pages %}
+          <nav class="profile-pagination" aria-label="Profile post pages">
+            {% if posts.has_previous %}<a href="?page={{ posts.previous_page_number }}">Newer posts</a>{% else %}<span></span>{% endif %}
+            <span>Page {{ posts.number }} of {{ posts.paginator.num_pages }}</span>
+            {% if posts.has_next %}<a href="?page={{ posts.next_page_number }}">Older posts</a>{% else %}<span></span>{% endif %}
+          </nav>
+        {% endif %}
+      {% else %}
+        <div class="public-profile-empty"><span aria-hidden="true">♡</span><h3>A little quiet here.</h3><p>Public posts will show up in this space.</p></div>
+      {% endif %}
+    </section>
+    <p id="profileFollowMessage" class="profile-follow-message" role="status" hidden></p>
+  {% if user.is_authenticated and not is_owner %}<script src="{% static 'web/profile.js' %}" defer></script>{% endif %}
+{% endblock %}

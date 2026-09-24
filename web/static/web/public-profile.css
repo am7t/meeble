@@ -1,0 +1,35 @@
+.public-profile-card { width: min(100%, 760px); padding: 0; overflow: hidden; }
+.profile-back-link { display: inline-flex; margin-bottom: 23px; color: #687663; font-size: 10px; font-weight: 700; text-decoration: none; text-underline-offset: 3px; }
+.profile-back-link:hover { text-decoration: underline; }
+.public-profile-hero { display: grid; grid-template-columns: 80px minmax(0, 1fr) auto; align-items: center; gap: 18px; padding: 25px 23px; border: 1px solid rgba(143,156,123,.18); border-radius: 16px; background: linear-gradient(120deg,rgba(236,240,224,.82),rgba(255,255,255,.67)); box-shadow: inset 0 1px 0 rgba(255,255,255,.94), 0 8px 20px rgba(52,58,43,.065); }
+.public-profile-avatar { width: 78px; height: 78px; flex-basis: 78px; font-size: 31px; }
+.public-profile-copy { min-width: 0; }
+.public-profile-copy h1 { margin: 6px 0 0; color: #354038; font: 850 31px/1.13 var(--display); letter-spacing: -.8px; }
+.public-profile-handle { margin: 4px 0 0; color: #808779; font-size: 11px; }
+.public-profile-bio { margin: 13px 0 0; color: #5e685d; font-size: 11px; line-height: 1.65; overflow-wrap: anywhere; }
+.public-profile-actions { align-self: start; }
+.profile-edit-link, .profile-follow-button { display: inline-flex; align-items: center; justify-content: center; min-height: 36px; padding: 0 15px; border: 1px solid #526b58; border-radius: 999px; background: #526b58; color: white; font: 750 10px var(--sans); text-decoration: none; cursor: pointer; }
+.profile-follow-button.is-following { background: rgba(255,255,255,.58); color: #50644f; }
+.public-profile-stats { display: flex; gap: 9px; margin: 17px 0 23px; padding: 0; }
+.public-profile-stats div { display: grid; min-width: 104px; gap: 4px; padding: 11px 14px; border: 1px solid rgba(255,255,255,.86); border-radius: 11px; background: rgba(255,255,250,.64); box-shadow: 0 4px 12px rgba(51,57,43,.04); }
+.public-profile-stats dt { color: #858a7e; font-size: 9px; }
+.public-profile-stats dd { margin: 0; color: #465546; font: 800 16px var(--display); }
+.public-profile-section-heading { margin: 0 0 13px; }
+.public-profile-section-heading h2 { margin: 5px 0 0; color: #39433a; font: 850 22px var(--display); letter-spacing: -.35px; }
+.public-profile-post-list { display: grid; gap: 11px; }
+.public-profile-post { padding: 16px 17px 13px; border: 1px solid rgba(255,255,255,.94); border-radius: 5px 13px 5px 13px; background: linear-gradient(145deg,rgba(255,255,250,.9),rgba(255,255,255,.7)); box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 3px 0 rgba(218,217,207,.7), 0 9px 20px rgba(51,57,43,.07); color: #596057; font-size: 12px; line-height: 1.7; overflow-wrap: anywhere; }
+.public-profile-post p { margin: 9px 0 13px; white-space: normal; }
+.public-profile-post-meta, .public-profile-post-stats { display: flex; gap: 7px; color: #92968b; font-size: 9px; }
+.public-profile-post-stats { padding-top: 10px; border-top: 1px solid rgba(112,123,104,.11); }
+.profile-pagination { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 16px; color: #8c9185; font-size: 9px; }
+.profile-pagination a { color: #536a56; font-weight: 700; text-underline-offset: 3px; }
+.public-profile-empty { padding: 29px 16px; border: 1px dashed rgba(112,129,99,.28); border-radius: 13px; background: rgba(255,255,250,.48); text-align: center; }
+.public-profile-empty>span { color: #bc8477; font-size: 23px; }
+.public-profile-empty h3 { margin: 8px 0 5px; color: #53624f; font: 800 16px var(--display); }
+.public-profile-empty p { margin: 0; color: #898d82; font-size: 10px; }
+.profile-follow-message { margin: 14px 0 0; color: #66765e; font-size: 10px; }
+.public-profile-card[data-theme="blush"] .public-profile-hero { background: linear-gradient(120deg,rgba(248,229,224,.9),rgba(255,255,255,.67)); }
+.public-profile-card[data-theme="lilac"] .public-profile-hero { background: linear-gradient(120deg,rgba(231,225,243,.91),rgba(255,255,255,.67)); }
+.public-profile-card[data-layout="airy"] .public-profile-hero { padding-block: 34px; }
+@media (max-width: 620px) { .public-profile-card { padding: 0; } .public-profile-hero { grid-template-columns: 58px minmax(0,1fr); gap: 13px; padding: 18px 15px; } .public-profile-avatar { width: 56px; height: 56px; flex-basis: 56px; font-size: 22px; } .public-profile-copy h1 { font-size: 25px; } .public-profile-copy .auth-eyebrow { font-size: 8px; } .public-profile-actions { grid-column: 2; grid-row: 2; align-self: center; } .public-profile-stats { gap: 6px; } .public-profile-stats div { flex: 1; min-width: 0; padding: 9px 10px; } }
+@media (prefers-reduced-transparency: reduce) { .public-profile-hero, .public-profile-stats div, .public-profile-post { background: #f1f2ea; } }

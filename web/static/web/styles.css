@@ -99,6 +99,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .post-author strong { display: block; font-size: 12px; font-weight: 800; letter-spacing: -.12px; }
 .post-author small { display: block; margin-top: 3px; color: #999a90; font-size: 9px; }
 .post-author small span { padding: 0 2px; color: #c4bfb2; }
+.post-profile-link { color: inherit; text-decoration: none; text-underline-offset: 2px; }
+.post-profile-link:hover, .person-profile-link:hover strong { color: var(--moss-dark); text-decoration: underline; }
 .post-menu-wrap { position: relative; margin-left: auto; }
 .post-menu { padding: 4px 2px 4px 9px; border: 0; background: none; color: #918f84; font-size: 19px; line-height: 1; cursor: pointer; }
 .post-menu-popover { position: absolute; top: calc(100% + 4px); right: 0; z-index: 4; display: grid; min-width: 150px; padding: 5px; border: 1px solid rgba(255,255,255,.94); border-radius: 10px; background: rgba(255,255,250,.94); box-shadow: 0 8px 22px rgba(44,51,40,.16); backdrop-filter: blur(16px) saturate(1.35); }
@@ -171,6 +173,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .person-result { display: flex; align-items: center; gap: 10px; padding: 9px; border: 1px solid rgba(226,228,216,.86); border-radius: 11px; background: rgba(255,255,250,.65); }
 .person-result .avatar { width: 38px; height: 38px; flex: 0 0 auto; }
 .person-copy { flex: 1; min-width: 0; }
+.person-profile-link { color: inherit; text-decoration: none; }
 .person-copy strong, .person-copy small { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .person-copy strong { color: #465044; font-size: 11px; font-weight: 800; }
 .person-copy small { margin-top: 4px; color: #91958a; font-size: 9px; }

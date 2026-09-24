@@ -16,7 +16,7 @@ def _authentication_error():
 
 
 def _visible_post(user, post_id):
-    visible_posts = Post.objects.filter(
+    visible_posts = Post.objects.filter(author__is_active=True).filter(
         Q(author=user)
         | Q(visibility=Post.Visibility.PUBLIC)
         | Q(
@@ -76,7 +76,7 @@ def _serialize_post(post, user):
 
 
 def _visible_feed_queryset(user, following_only=False):
-    posts = _annotated_posts(user)
+    posts = _annotated_posts(user).filter(author__is_active=True)
     if following_only:
         posts = posts.filter(
             author__followers__follower=user,
@@ -132,7 +132,8 @@ def people(request):
 
     User = get_user_model()
     people_page = Paginator(
-        User.objects.exclude(pk=request.user.pk)
+        User.objects.filter(is_active=True)
+        .exclude(pk=request.user.pk)
         .select_related("profile")
         .annotate(
             _api_following=Exists(
@@ -165,7 +166,9 @@ def toggle_follow(request, user_id):
     if not request.user.is_authenticated:
         return _authentication_error()
     User = get_user_model()
-    target = get_object_or_404(User.objects.exclude(pk=request.user.pk), pk=user_id)
+    target = get_object_or_404(
+        User.objects.filter(is_active=True).exclude(pk=request.user.pk), pk=user_id
+    )
     follow = Follow.objects.filter(follower=request.user, followed=target).first()
     if follow:
         follow.delete()

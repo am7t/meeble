@@ -30,6 +30,6 @@
     {% endfor %}
     <button class="auth-submit" type="submit">Save profile <span aria-hidden="true">→</span></button>
   </form>
-  <p class="auth-switch"><a href="{% url 'home' %}">Back to your feed</a></p>
+  <p class="auth-switch"><a href="{% url 'public-profile' handle=profile.handle %}">View your public profile</a> · <a href="{% url 'home' %}">Back to your feed</a></p>
   <p class="auth-provider-note">Your profile is saved in this app’s local SQLite database.</p>
 {% endblock %}

@@ -66,6 +66,10 @@ function escapeHTML(value) {
   return String(value).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
 }
 
+function profileURL(handle) {
+  return document.body.dataset.profileUrlTemplate.replace('__handle__', encodeURIComponent(handle));
+}
+
 function postTemplate(post) {
   const art = post.art === 'custom' ? 'custom' : post.art;
   const avatar = ['amelia', 'jules', 'lila', 'nina', 'maya'].includes(post.avatar) ? post.avatar : 'amelia';
@@ -75,12 +79,16 @@ function postTemplate(post) {
   const avatarMarkup = post.avatar && ['amelia', 'jules', 'lila', 'nina', 'maya'].includes(post.avatar)
     ? `<img class="avatar" src="${window.MEEBLE_ASSETS}avatar-${avatar}.svg" alt="">`
     : `<span class="avatar avatar-initial" aria-hidden="true">${escapeHTML(post.author.slice(0, 1).toUpperCase())}</span>`;
+  const handle = post.handle.replace(/^@/, '');
+  const authorLink = post.serverId
+    ? `<a class="post-profile-link" href="${escapeHTML(profileURL(handle))}">${escapeHTML(post.handle)}</a>`
+    : escapeHTML(post.handle);
   const commentCount = Number.isSafeInteger(post.commentCount) ? post.commentCount : post.comments.length;
   const menuItems = post.serverId && post.canEdit
     ? '<button type="button" data-action="edit">Edit post</button><button type="button" data-action="delete">Delete post</button>'
     : '<button type="button" data-action="hide">Hide from this feed</button>';
   return `<article class="post-card" data-id="${escapeHTML(post.id)}">
-    <div class="post-top">${avatarMarkup}<div class="post-author"><strong>${escapeHTML(post.author)}</strong><small>${escapeHTML(post.handle)} <span>·</span> ${escapeHTML(post.time)}${post.edited ? ' <span>·</span> edited' : ''}</small></div><div class="post-menu-wrap"><button class="post-menu" aria-label="Post options" aria-haspopup="true" aria-expanded="false" data-action="menu">···</button><div class="post-menu-popover" role="group" hidden>${menuItems}</div></div></div>
+    <div class="post-top">${avatarMarkup}<div class="post-author"><strong>${escapeHTML(post.author)}</strong><small>${authorLink} <span>·</span> ${escapeHTML(post.time)}${post.edited ? ' <span>·</span> edited' : ''}</small></div><div class="post-menu-wrap"><button class="post-menu" aria-label="Post options" aria-haspopup="true" aria-expanded="false" data-action="menu">···</button><div class="post-menu-popover" role="group" hidden>${menuItems}</div></div></div>
     <p class="post-caption"><strong>${escapeHTML(post.author.split(' ')[0])}</strong> ${caption}</p>
     ${media}
     <div class="post-actions"><button class="action-btn ${post.liked ? 'liked' : ''}" data-action="like" aria-label="${post.liked ? 'Unlike' : 'Like'} post" aria-pressed="${post.liked}"><svg class="icon"><use href="#i-heart"/></svg><span>${post.likes}</span></button><button class="action-btn" data-action="focus-comment" aria-label="Comment"><svg class="icon"><use href="#i-comment"/></svg><span>${commentCount || ''}</span></button><button class="action-btn" data-action="share" aria-label="Share post"><svg class="icon"><use href="#i-send"/></svg></button><span class="action-spacer"></span><button class="action-btn bookmark-btn ${state.saved.includes(post.id) ? 'saved' : ''}" data-action="bookmark" aria-label="${state.saved.includes(post.id) ? 'Remove saved post' : 'Save post'}" aria-pressed="${state.saved.includes(post.id)}"><svg class="icon"><use href="#i-bookmark"/></svg></button></div>
@@ -145,7 +153,7 @@ function renderPeople() {
   if (!peopleRecords.length) {
     list.innerHTML = '<p class="people-empty">No other local accounts yet. Your circle will grow as people join this Meeble database.</p>';
   } else {
-    list.innerHTML = peopleRecords.map((person) => `<article class="person-result"><span class="avatar avatar-initial" aria-hidden="true">${escapeHTML(person.name.slice(0, 1).toUpperCase())}</span><span class="person-copy"><strong>${escapeHTML(person.name)}</strong><small>${escapeHTML(person.handle)} · ${person.follower_count} ${person.follower_count === 1 ? 'follower' : 'followers'}</small></span><button type="button" class="person-follow ${person.following ? 'is-following' : ''}" data-follow-id="${person.id}" aria-pressed="${person.following}">${person.following ? 'Following' : 'Follow'}</button></article>`).join('');
+    list.innerHTML = peopleRecords.map((person) => `<article class="person-result"><span class="avatar avatar-initial" aria-hidden="true">${escapeHTML(person.name.slice(0, 1).toUpperCase())}</span><a class="person-copy person-profile-link" href="${escapeHTML(profileURL(person.handle.replace(/^@/, '')))}"><strong>${escapeHTML(person.name)}</strong><small>${escapeHTML(person.handle)} · ${person.follower_count} ${person.follower_count === 1 ? 'follower' : 'followers'}</small></a><button type="button" class="person-follow ${person.following ? 'is-following' : ''}" data-follow-id="${person.id}" aria-pressed="${person.following}">${person.following ? 'Following' : 'Follow'}</button></article>`).join('');
   }
   const more = document.querySelector('#peopleMore');
   more.hidden = !nextPeoplePage;

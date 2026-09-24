@@ -11,7 +11,7 @@
   <link rel="icon" type="image/svg+xml" href="{% static 'web/assets/mascot.svg' %}">
   <link rel="stylesheet" href="{% static 'web/styles.css' %}">
 </head>
-<body data-authenticated="{{ user.is_authenticated|yesno:'true,false' }}" data-display-name="{% if user.is_authenticated %}{{ user.profile.display_name }}{% else %}Amelia Rose{% endif %}" data-handle="{% if user.is_authenticated %}@{{ user.profile.handle }}{% else %}@amelia.rose{% endif %}">
+<body data-authenticated="{{ user.is_authenticated|yesno:'true,false' }}" data-display-name="{% if user.is_authenticated %}{{ user.profile.display_name }}{% else %}Amelia Rose{% endif %}" data-handle="{% if user.is_authenticated %}@{{ user.profile.handle }}{% else %}@amelia.rose{% endif %}" data-profile-url-template="{% url 'public-profile' handle='__handle__' %}">
   <svg class="icon-defs" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
     <symbol id="i-home" viewBox="0 0 24 24"><path d="m3.5 10 8.5-7 8.5 7v10.5H14v-7h-4v7H3.5z"/></symbol>
     <symbol id="i-discover" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="7.2"/><path d="m16.2 16.2 4.3 4.3M13.8 8l-1.7 4.1-4.1 1.7 1.7-4.1z"/></symbol>

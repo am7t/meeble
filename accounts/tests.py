@@ -114,6 +114,10 @@ class ProfileEditViewTests(TestCase):
         self.assertContains(home, f'href="{self.url}"')
         self.assertEqual(editor.status_code, 200)
         self.assertContains(editor, "Edit your profile")
+        self.assertContains(
+            editor,
+            f'href="{reverse("public-profile", kwargs={"handle": self.user.profile.handle})}"',
+        )
         self.assertContains(editor, "Color mood")
         self.assertContains(editor, self.user.profile.display_name)
         self.assertNotContains(editor, self.other_user.email)

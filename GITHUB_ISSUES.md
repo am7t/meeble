@@ -25,9 +25,9 @@ This is the implementation backlog for Meeble in reviewable slices. Issues are t
 5. **Add account recovery and email-provider boundaries**
    - Design verification and recovery token flows with one-time, expiring tokens.
    - Keep outbound mail behind an adapter; document that delivery needs an email service and is not available in a fully offline run.
-6. **[Done] Build editable profiles and validated customization**
+6. **[Done] Build editable and public profiles with validated customization**
    - Store profile fields relationally and supported layout/theme settings as validated structured data.
-   - Enforce owner-only edits in the server layer; public profile pages remain future work.
+   - Enforce owner-only edits and viewer-specific post visibility on profile pages.
 7. **Add in-app Polaroid capture**
    - Capture through the app camera flow only; validate provenance server-side.
    - Keep media private and enforce access checks on delivery.
@@ -41,6 +41,7 @@ This is the implementation backlog for Meeble in reviewable slices. Issues are t
 9. **[Done] Add comments, follows, and feed privacy rules**
    - SQLite-backed comments, reactions, follow/unfollow actions, and the Following filter are in place.
    - Feed and follow endpoints enforce session, visibility, and self-follow boundaries with integration tests.
+   - Public profile pages exclude private posts from other viewers and never expose account email addresses.
 10. **Add stories and expiration**
     - Support story creation, viewing, deletion, visibility checks, and expiration.
     - Ensure expired stories are excluded from normal API access.

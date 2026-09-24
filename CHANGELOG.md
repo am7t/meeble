@@ -11,6 +11,7 @@
 - Added authenticated, paginated post APIs with SQLite-backed comments/reactions, visibility filtering, and owner-only deletion; connected signed-in feed actions to the local server.
 - Added owner-only post editing with validation and an edit menu; connected feed actions to look up database-backed posts correctly and load additional pages.
 - Added an authenticated public-profile directory, follow/unfollow actions, and a server-filtered Following feed.
+- Added public profile pages with viewer-specific post visibility, follow counts, and profile links from account-backed feed posts.
 - Added the incremental implementation backlog in `GITHUB_ISSUES.md`.
 
 

@@ -27,7 +27,8 @@ Then visit `http://127.0.0.1:8000`. The development server binds to this compute
 - Profiles are editable by their signed-in owner, with supported color and layout choices saved in SQLite.
 - Signed-in users' posts, reactions, comments, and follow relationships persist in SQLite with visibility and ownership checks.
 - A local people directory and Following feed filter show public profile details and posts from followed accounts.
-- SQLite has relational profile, post, comment, reaction, and follow tables. Media, public profile pages, stories, messaging, and Grail are still being built.
+- Public profile pages show display name, handle, bio, follow counts, and posts the viewer is allowed to see.
+- SQLite has relational profile, post, comment, reaction, and follow tables. Media, stories, messaging, and Grail are still being built.
 - No real Google/Apple sign-in, email delivery, upload, messaging, marketplace, or remote service integration yet.
 
 ## Development roadmap
