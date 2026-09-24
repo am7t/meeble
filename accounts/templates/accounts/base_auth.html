@@ -1,0 +1,22 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f4ef">
+  <title>{% block title %}Meeble{% endblock %}</title>
+  <link rel="icon" type="image/svg+xml" href="{% static 'web/assets/mascot.svg' %}">
+  <link rel="stylesheet" href="{% static 'web/styles.css' %}">
+  <link rel="stylesheet" href="{% static 'web/auth.css' %}">
+</head>
+<body>
+  <main class="auth-page">
+    <a class="brand auth-brand" href="{% url 'home' %}" aria-label="Meeble home"><span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span><span>meeble<span class="brand-dot">.</span></span></a>
+    <section class="auth-card" aria-labelledby="auth-title">
+      {% block content %}{% endblock %}
+    </section>
+    <p class="auth-footnote">A little place for you, right here on your device.</p>
+  </main>
+</body>
+</html>

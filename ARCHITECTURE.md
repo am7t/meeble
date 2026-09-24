@@ -2,7 +2,7 @@
 
 ## Current local application foundation
 
-Django serves the current UI from `web/templates/web/index.html` and its CSS, JavaScript, and local SVG assets from `web/static/web/`. Run it on `127.0.0.1` only. SQLite is configured in `meeble_site/settings.py`; `accounts.User` is the custom email-identified user model and has an initial tracked migration. Django owns session middleware and CSRF protection. The home feed itself remains fictional seed data in the browser and its likes, comments, posts, and hidden state still live in versioned `localStorage` while feed APIs are built.
+Django serves the current UI from `web/templates/web/index.html` and its CSS, JavaScript, and local SVG assets from `web/static/web/`. Run it on `127.0.0.1` only. SQLite is configured in `meeble_site/settings.py`; `accounts.User` is the custom email-identified user model and has an initial tracked migration. Account screens provide local registration, sign-in, and POST-only sign-out. Django owns password hashing, database-backed session middleware, and CSRF protection. The home feed itself remains fictional seed data in the browser and its likes, comments, posts, and hidden state still live in versioned `localStorage` while feed APIs are built.
 
 The UI writes only after a user action. Storage errors are handled with a readable message, and user-entered text is HTML-escaped before feed rendering. The local database file is excluded from Git.
 

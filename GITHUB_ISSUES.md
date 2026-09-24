@@ -18,10 +18,10 @@ This is the initial backlog for building Meeble in reviewable slices. Issues sho
 
 ## Accounts and profiles
 
-4. **Implement local email-and-password registration and sign-in**
+4. **[Done] Implement local email-and-password registration and sign-in**
    - Hash passwords with a maintained password-hashing implementation.
-   - Use expiring, revocable server-side sessions and secure cookie settings.
-   - Validate inputs and return understandable errors without leaking internals.
+   - Use Django's database-backed sessions, CSRF protection, and password hashing.
+   - Validate inputs and return understandable errors without leaking internals. Add rate limiting before any network exposure.
 5. **Add account recovery and email-provider boundaries**
    - Design verification and recovery token flows with one-time, expiring tokens.
    - Keep outbound mail behind an adapter; document that delivery needs an email service and is not available in a fully offline run.

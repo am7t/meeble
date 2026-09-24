@@ -21,7 +21,7 @@ Then visit `http://127.0.0.1:8000`. The development server binds to this compute
 - Local Django app shell, SQLite database, bespoke art direction, and responsive feed experience.
 - Demo profiles, stories, posts, and community sidebar.
 - Locally persisted post creation, likes, comments, and hidden posts.
-- Email/password account model and server-side session foundation are in place; registration UI and account flows are the next feature slice.
+- Local email/password registration, sign-in, and sign-out use Django password hashing and database-backed sessions.
 - No real Google/Apple sign-in, email delivery, upload, messaging, marketplace, or remote service integration yet.
 
 ## Next development phase

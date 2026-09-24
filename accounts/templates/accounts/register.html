@@ -1,0 +1,21 @@
+{% extends "accounts/base_auth.html" %}
+{% block title %}Create an account · Meeble{% endblock %}
+{% block content %}
+  <span class="auth-eyebrow">MAKE YOURSELF AT HOME</span>
+  <h1 id="auth-title">Find your people.</h1>
+  <p class="auth-intro">Create a local account for your Meeble space.</p>
+  <form class="auth-form" method="post" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="auth-errors" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+    {% for field in form %}
+      <div class="auth-field">
+        {{ field.label_tag }}{{ field }}
+        {% if field.help_text %}<small class="field-help">{{ field.help_text }}</small>{% endif %}
+        {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+      </div>
+    {% endfor %}
+    <button class="auth-submit" type="submit">Create your account <span aria-hidden="true">→</span></button>
+  </form>
+  <p class="auth-switch">Already have an account? <a href="{% url 'accounts:login' %}">Sign in</a></p>
+  <p class="auth-provider-note">Accounts are stored in the local SQLite database. Google and Apple sign-in need online provider setup.</p>
+{% endblock %}

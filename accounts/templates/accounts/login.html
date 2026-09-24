@@ -1,0 +1,20 @@
+{% extends "accounts/base_auth.html" %}
+{% block title %}Sign in · Meeble{% endblock %}
+{% block content %}
+  <span class="auth-eyebrow">YOUR LITTLE CORNER</span>
+  <h1 id="auth-title">Welcome back.</h1>
+  <p class="auth-intro">Sign in and pick up where your people left off.</p>
+  <form class="auth-form" method="post" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="auth-errors" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+    {% for field in form %}
+      <div class="auth-field">
+        {{ field.label_tag }}{{ field }}
+        {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+      </div>
+    {% endfor %}
+    <button class="auth-submit" type="submit">Sign in to Meeble <span aria-hidden="true">→</span></button>
+  </form>
+  <p class="auth-switch">New around here? <a href="{% url 'accounts:register' %}">Make an account</a></p>
+  <p class="auth-provider-note">Google and Apple sign-in need online provider setup. This local preview uses email and password.</p>
+{% endblock %}
